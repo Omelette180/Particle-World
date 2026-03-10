@@ -4,7 +4,8 @@ Particle-World is a sandbox simulation game where physics, chemistry, ecosystems
 
 ## Play
 
-https://yourusername.github.io/particle-world
+https://omelette180.github.io/Particle-World/
+
 
 ## Controls
 
