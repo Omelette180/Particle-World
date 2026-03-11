@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Particle World</title>
+  <link rel="icon" type="image/png" href="favicon-256.png" sizes="256x256">
+  <link rel="icon" type="image/png" href="favicon-64.png" sizes="64x64">
+  <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── LOADER / MENU ─────────────────────────────────────── -->
+  <div id="loader">
+    <canvas id="lcanvas"></canvas>
+    <div id="linner">
+      <div class="pw-logo">P<span>W</span></div>
+      <div class="pw-tagline">Physics Sandbox</div>
+      <div class="beta-pill">✦ v2.0.0 — Beta</div>
+
+      <div id="menuBtns" style="display:none">
+        <button class="menu-btn primary" id="btnPlay">▶ Play</button>
+        <button class="menu-btn" id="btnMulti">⬡ Multiplayer</button>
+        <button class="menu-btn" id="btnAccount">👤 Account</button>
+        <button class="menu-btn" id="btnCredits">✦ Credits</button>
+      </div>
+
+      <div id="lbar-wrap"><div id="lbar"></div></div>
+      <div id="ltxt">Loading elements...</div>
+    </div>
+  </div>
+
+  <!-- ── GAME ──────────────────────────────────────────────── -->
+  <div id="game">
+    <!-- Top toolbar -->
+    <div id="top">
+      <button class="tb" id="btnMenu" title="Menu">☰</button>
+      <button class="tb" id="btnPause" title="Pause">⏸</button>
+      <button class="tb" id="btnClear" title="Clear">⬛</button>
+      <button class="tb" id="btnGrid" title="Grid">⊞</button>
+      <button class="tb" id="btnHeat" title="Heat map">🌡</button>
+      <button class="tb" id="btnRain" title="Rain">🌧</button>
+      <div class="tb-sep"></div>
+      <span class="tl">Brush</span>
+      <input type="range" id="rBrush" min="1" max="40" value="3" title="Brush size">
+      <span class="bv" id="vBrush">3</span>
+      <div class="tb-sep"></div>
+      <span class="tl">Speed</span>
+      <input type="range" id="rSpeed" min="1" max="8" value="2" title="Sim speed">
+      <span class="bv" id="vSpeed">2</span>
+      <div class="tb-sep"></div>
+      <button class="tb" id="btnChat" title="Chat">💬</button>
+      <button class="tb" id="btnAdmin" style="display:none" title="Admin">⚙</button>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+        <span id="statFps" class="stat">60 fps</span>
+        <span id="statParts" class="stat">0 cells</span>
+      </div>
+    </div>
+
+    <!-- Main area -->
+    <div id="main">
+      <!-- Sidebar -->
+      <div id="sb">
+        <div id="elemSearch-wrap">
+          <input id="elemSearch" placeholder="Search elements..." autocomplete="off"/>
+        </div>
+        <div id="ss"></div><!-- element list populated by ui.js -->
+      </div>
+
+      <!-- Canvas stack -->
+      <div id="canvasWrap">
+        <canvas id="gc"></canvas>   <!-- main simulation -->
+        <canvas id="hmc"></canvas>  <!-- heat map overlay -->
+        <canvas id="bhc"></canvas>  <!-- VFX overlay -->
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div id="btm">
+      <span id="btmSel">sand</span>
+      <span id="btmPos"></span>
+      <span id="btmInfo"></span>
+    </div>
+  </div>
+
+  <!-- ── PANELS (injected by ui.js) ────────────────────────── -->
+  <div id="panels"></div>
+
+  <!-- ── CHAT PILL ─────────────────────────────────────────── -->
+  <div id="chatPill">💬 <span id="chatUnreadBadge" style="display:none">0</span></div>
+  <div id="chatPanel" style="display:none">
+    <div id="chatMessages"></div>
+    <div id="chatInput-wrap">
+      <input id="chatInput" placeholder="Say something..." maxlength="200"/>
+      <button id="chatSend">→</button>
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ────────────────────────────────────────────── -->
+  <!-- Load order matters: core → physics → elements → systems → ui -->
+  <script src="js/core.js"></script>
+  <script src="js/physics.js"></script>
+
+  <!-- Element categories (each registers itself into ElementRegistry) -->
+  <script src="elements/basics.js"></script>
+  <script src="elements/fire.js"></script>
+  <script src="elements/liquids.js"></script>
+  <script src="elements/gases.js"></script>
+  <script src="elements/powders.js"></script>
+  <script src="elements/explosives.js"></script>
+  <script src="elements/solids.js"></script>
+  <script src="elements/nature.js"></script>
+  <script src="elements/creatures.js"></script>
+  <script src="elements/weather.js"></script>
+  <script src="elements/space.js"></script>
+  <script src="elements/tech.js"></script>
+  <script src="elements/vehicles.js"></script>
+  <script src="elements/special.js"></script>
+  <script src="elements/molten.js"></script>
+
+  <!-- Systems -->
+  <script src="js/achievements.js"></script>
+  <script src="js/account.js"></script>
+  <script src="js/mods.js"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Firebase-dependent (load last) -->
+  <script type="module" src="js/firebase-init.js"></script>
+  <script src="js/multiplayer.js" defer></script>
+  <script src="js/chat.js" defer></script>
+
+  <!-- UI last (needs elements registered) -->
+  <script src="js/ui.js"></script>
+
+</body>
+</html>
