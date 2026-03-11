@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="favicon-256.png" sizes="256x256">
-<link rel="icon" type="image/png" href="favicon-64.png" sizes="64x64">
-<link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32">
 <meta charset="UTF-8"/><title>Particle World</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:wght@300;400&display=swap');
@@ -941,7 +938,7 @@ body.layout-pro #proStrip {
       <div class="pw-logo">PARTICLE<span>WORLD</span></div>
       <div class="pw-tagline">Sandbox Simulation &nbsp;·&nbsp; Version 1.0</div>
       <div class="pw-tagline" style="font-size:.6rem;color:#333;margin-top:-.5rem;margin-bottom:2rem;letter-spacing:.12em">The biggest update. Expect beautiful chaos.</div>
-      <div class="beta-pill">✦ v1.2.1 — Beta</div>
+      <div class="beta-pill">✦ v1.2.3 — Beta</div>
       <button class="menu-btn primary" id="mPlay">▶ &nbsp;PLAY</button>
       <button class="menu-btn" id="mSandbox">🏖 &nbsp;SANDBOX</button>
       <button class="menu-btn" id="mTutorial">📖 &nbsp;TUTORIAL</button>
@@ -1056,7 +1053,7 @@ body.layout-pro #proStrip {
   <!-- Title -->
   <div style="margin-bottom:18px;">
     <div style="font-family:'Syne',sans-serif;font-size:1.6rem;color:var(--acc);letter-spacing:.12em;margin-bottom:4px;">PARTICLE WORLD</div>
-    <div style="font-size:.55rem;color:#333;letter-spacing:.2em;">v1.2.1 BETA · A PHYSICS SANDBOX</div>
+    <div style="font-size:.55rem;color:#333;letter-spacing:.2em;">v1.2.3 BETA · A PHYSICS SANDBOX</div>
   </div>
 
   <!-- Main creator -->
@@ -1149,7 +1146,7 @@ body.layout-pro #proStrip {
     Made with ☕ and a concerning amount of time
   </div>
 
-  <div class="beta-pill" style="margin-bottom:14px;">v1.2.1 BETA — Layout + Performance Update ✦</div>
+  <div class="beta-pill" style="margin-bottom:14px;">v1.2.3 BETA — Domain Lock + Favicon Update ✦</div>
 
   <button class="op-close" onclick="document.getElementById('panCred').classList.remove('open')">Close</button>
 </div></div>
@@ -1158,16 +1155,13 @@ body.layout-pro #proStrip {
 <!-- UPDATE LOG POPUP (shows on new version) -->
 <div id="updatePopup" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;">
   <div style="background:#080808;border:1px solid #2a1a4a;border-radius:8px;padding:22px 26px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;margin-bottom:4px;">✨ v1.2.1 — Beta Update!</div>
-    <div style="font-size:.6rem;color:#333;margin-bottom:14px;letter-spacing:.08em;">Layout overhaul, performance fixes, global chat.</div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;margin-bottom:4px;">🔒 v1.2.3 — Beta Update!</div>
+    <div style="font-size:.6rem;color:#333;margin-bottom:14px;letter-spacing:.08em;">Domain protection, new favicon, visitor logging.</div>
     <div style="font-size:.63rem;color:#555;line-height:2;margin-bottom:14px;">
-      🖥 Pro Layout — full-screen canvas with bottom element dock<br>
-      💬 Global Chat — talk to all players in real-time via Firebase<br>
-      💥 Explosion performance fixed — no more 1 FPS on big blasts<br>
-      🔥 Fire performance fixed — removed expensive per-cell heat radius loop<br>
-      🏷 Category tabs in Pro Layout — 18 categories, instant switching<br>
-      🔍 Pro search — search all elements across all categories<br>
-      🎚 Classic layout unchanged — switch any time in Settings
+      🔒 Domain Lock — game only runs on the official URL<br>
+      📊 Visitor Logging — all visits logged to Firebase, stolen copies flagged<br>
+      🎨 New Favicon — pixel art P (fire/lava) and W (ice/water) with VFX<br>
+      🖼 3 favicon sizes — 256×256, 64×64, 32×32 for all contexts
     </div>
     <button onclick="dismissUpdatePopup()" style="padding:7px 22px;background:transparent;border:1px solid #a855f7;border-radius:3px;color:#a855f7;font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;width:100%;">Let's go ✦</button>
   </div>
@@ -1224,8 +1218,26 @@ body.layout-pro #proStrip {
   <h2>📋 Update Log</h2>
 
   <div class="log-entry current">
-    <div class="log-ver">v1.2.1 — Beta Update ✨</div>
+    <div class="log-ver">v1.2.3 — Beta Update 🔒</div>
     <div class="log-date">Latest version</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔒 DOMAIN LOCK & PROTECTION</div>
+    <div class="log-item">Game is now domain-locked — only runs on the official URL. Any unauthorized copy shows a theft warning screen instead of the game</div>
+    <div class="log-item">Every visit is logged to Firebase with hostname, full URL, browser info and timestamp — stolen copies are flagged with <code>stolen: true</code> so the owner can see them in the Firebase console</div>
+    <div class="log-item">Redirect link on theft warning screen points back to the real game</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🎨 FAVICON</div>
+    <div class="log-item">Brand new favicon — pixel art P and W matching the in-game font style, traced directly from the game screenshot</div>
+    <div class="log-item">P is styled with fire and lava — yellow-white fire tip at top fading down through orange to deep red lava at the bottom, with fire particles rising above, lava drips below, and ember sparks orbiting</div>
+    <div class="log-item">W is styled with ice and water — icy white-blue at top fading to deep navy, with frost spikes, water droplets, and ice crystal sparkles</div>
+    <div class="log-item">Three sizes shipped: 256×256, 64×64, 32×32 — all linked in the page head for correct display in browser tabs, bookmarks, and home screens</div>
+
+    <div class="log-item change">Version: v1.2.1 → v1.2.3 Beta</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-ver">v1.2.1 — Beta Update ✨</div>
+    <div class="log-date">Previous version</div>
 
     <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🖥 PRO LAYOUT</div>
     <div class="log-item">New "Pro" layout mode — switch in Settings. Full-screen canvas with no sidebar, maximum drawing space</div>
@@ -6040,7 +6052,7 @@ function uSulfur(x,y){
 // ══════════════════════════════════════════
 //  USER ACCOUNT SYSTEM  v1.0
 // ══════════════════════════════════════════
-const GAME_VERSION='1.2.1';
+const GAME_VERSION='1.2.3';
 let currentUser=null;
 function acctKey(user,key){return`pw_${user}_${key}`;}
 function acctSave(key,val){if(currentUser)localStorage.setItem(acctKey(currentUser,key),JSON.stringify(val));}
@@ -7701,12 +7713,41 @@ const FB_CFG={
 };
 
 let fbApp=null,fbDb=null,fbReady=false;
+
+// ── DOMAIN LOCK + VISITOR LOG ──────────────────────────────────────
+(function(){
+  const _ok=['omelette180.github.io/Particle-World','localhost','127.0.0.1'];
+  const _h=location.hostname;
+  const _allowed=_ok.some(d=>(location.hostname+location.pathname).includes(d)||location.hostname===d);
+  // Log visit to Firebase regardless (so owner can see stolen hosts)
+  function _logVisit(db,r,s){
+    try{
+      const _vref=r(db,'visits/'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+      s(_vref,{host:_h,href:location.href,ua:navigator.userAgent.slice(0,120),ts:Date.now(),stolen:!_allowed});
+    }catch(e){}
+  }
+  window._pwLogVisit=_logVisit;
+  window._pwAllowed=_allowed;
+  if(!_allowed){
+    // Nuke the canvas and show theft warning
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.body.innerHTML=`<div style="position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:monospace;color:#ff4444;text-align:center;padding:2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
+        <div style="font-size:1.1rem;font-weight:bold;margin-bottom:.5rem;">Unauthorized Copy Detected</div>
+        <div style="font-size:.75rem;color:#666;margin-bottom:1.5rem;">This game is only licensed to run on its official domain.</div>
+        <a href="https://particle-world.netlify.app" style="color:#a855f7;font-size:.8rem;">Play the real Particle World →</a>
+      </div>`;
+    });
+  }
+})();
+
 function fbInit(){
   if(fbReady)return;
   try{fbApp=initializeApp(FB_CFG);fbDb=getDatabase(fbApp);window._fbDb=fbDb;fbReady=true;
     window._fbReady=true;
-    // Expose Firebase functions for the global chat system
     window._fbImports={ref,set,get,onValue,onChildAdded,push,remove,query,limitToLast,orderByChild};
+    // Log visitor (stolen or legit)
+    if(window._pwLogVisit)window._pwLogVisit(fbDb,ref,set);
   }
   catch(e){console.warn('Firebase init failed:',e);mpSetStatus('✗ Firebase not configured — see console','#ff4444');}
 }
