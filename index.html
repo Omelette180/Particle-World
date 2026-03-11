@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="favicon-256.png">
 <meta charset="UTF-8"/><title>Particle World</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:wght@300;400&display=swap');
@@ -97,6 +96,142 @@ canvas{display:block;image-rendering:pixelated;}
 #ahud{position:absolute;top:34px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(0,0,0,.82);border:1px solid #004400;border-radius:4px;padding:3px 11px;font-size:.58rem;color:#44ff88;display:none;letter-spacing:.05em;}
 #btm{height:21px;background:var(--panel);border-top:1px solid var(--b);display:flex;align-items:center;padding:0 8px;gap:7px;flex-shrink:0;font-size:.49rem;color:#1e1e1e;}
 .h b{color:#2a2a2a;}
+
+/* ══ PRO LAYOUT ══════════════════════════════════════════════════════ */
+/* When body has .layout-pro: fullscreen canvas, bottom element bar    */
+
+body.layout-pro #sb { display:none !important; }
+body.layout-pro #layout { flex-direction:column; }
+body.layout-pro #cw { flex:1; }
+
+/* floating left toolbar (tools/modes strip) */
+body.layout-pro #proToolbar {
+  display:flex !important;
+  flex-direction:column;
+  position:absolute;
+  left:10px; top:50%;
+  transform:translateY(-50%);
+  z-index:50;
+  gap:4px;
+}
+#proToolbar { display:none; }
+
+body.layout-pro .protb {
+  width:36px;height:36px;
+  border-radius:6px;
+  border:1px solid #1a1a1a;
+  background:#0a0a0a;
+  color:#444;
+  font-size:.72rem;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .1s;
+  font-family:'DM Mono',monospace;
+}
+body.layout-pro .protb:hover { border-color:var(--acc);color:var(--acc);background:#110820; }
+body.layout-pro .protb.on { border-color:var(--grn);color:var(--grn);background:#071510; }
+
+/* ── BOTTOM ELEMENT DOCK ── */
+#proDock { display:none; }
+body.layout-pro #proDock {
+  display:flex !important;
+  flex-direction:column;
+  background:#070707;
+  border-top:1px solid #141414;
+  flex-shrink:0;
+  user-select:none;
+}
+
+/* category tab row */
+#proCats {
+  display:flex;
+  gap:0;
+  border-bottom:1px solid #111;
+  overflow-x:auto;
+  flex-shrink:0;
+  scrollbar-width:none;
+}
+#proCats::-webkit-scrollbar{display:none;}
+.pcat {
+  padding:5px 12px;
+  font-family:'DM Mono',monospace;
+  font-size:.48rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#2a2a2a;
+  cursor:pointer;
+  border-right:1px solid #111;
+  white-space:nowrap;
+  transition:all .08s;
+  flex-shrink:0;
+}
+.pcat:hover{color:#555;background:#0d0d0d;}
+.pcat.on{color:var(--acc);background:#0d0010;border-bottom:1px solid var(--acc);}
+
+/* element grid row */
+#proElems {
+  display:flex;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  gap:3px;
+  padding:5px 8px;
+  align-items:center;
+  min-height:52px;
+  scrollbar-width:none;
+}
+#proElems::-webkit-scrollbar{display:none;}
+
+/* element chip in pro dock */
+.peb {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  padding:4px 5px;
+  border-radius:5px;
+  border:1px solid transparent;
+  background:transparent;
+  cursor:pointer;
+  min-width:44px;
+  flex-shrink:0;
+  transition:all .08s;
+  font-family:'DM Mono',monospace;
+}
+.peb:hover { background:#111;border-color:#222; }
+.peb.sel { background:#120a20;border-color:var(--acc); }
+.peb .pdot {
+  width:22px;height:22px;
+  border-radius:4px;
+  flex-shrink:0;
+}
+.peb span {
+  font-size:.43rem;
+  color:#444;
+  white-space:nowrap;
+}
+.peb.sel span { color:#aaa; }
+.peb:hover span { color:#888; }
+
+/* Pro brush + search strip */
+#proStrip {
+  display:none;
+}
+body.layout-pro #proStrip {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:3px 10px;
+  border-bottom:1px solid #0e0e0e;
+  flex-shrink:0;
+}
+#proStrip input[type=text] {
+  background:#0a0a0a;border:1px solid #161616;border-radius:3px;
+  color:#555;font-family:'DM Mono',monospace;font-size:.52rem;
+  padding:3px 7px;outline:none;width:130px;
+}
+#proStrip .psl { font-size:.44rem;color:#222;letter-spacing:.08em; }
+#proStrip input[type=range] { width:70px; }
+#proStrip .psv { font-size:.52rem;color:var(--acc);min-width:16px; }
 
 /* modals */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(3px);}
@@ -803,7 +938,7 @@ canvas{display:block;image-rendering:pixelated;}
       <div class="pw-logo">PARTICLE<span>WORLD</span></div>
       <div class="pw-tagline">Sandbox Simulation &nbsp;·&nbsp; Version 1.0</div>
       <div class="pw-tagline" style="font-size:.6rem;color:#333;margin-top:-.5rem;margin-bottom:2rem;letter-spacing:.12em">The biggest update. Expect beautiful chaos.</div>
-      <div class="beta-pill">✦ v1.2 — Beta Bug Fix</div>
+      <div class="beta-pill">✦ v1.2.1 — Beta</div>
       <button class="menu-btn primary" id="mPlay">▶ &nbsp;PLAY</button>
       <button class="menu-btn" id="mSandbox">🏖 &nbsp;SANDBOX</button>
       <button class="menu-btn" id="mTutorial">📖 &nbsp;TUTORIAL</button>
@@ -893,6 +1028,12 @@ canvas{display:block;image-rendering:pixelated;}
   <div class="srow"><span class="slabel">⚡ Performance mode</span>
     <select id="setPerfMode"><option value="0">Off — Full quality</option><option value="1">On — Max FPS</option></select>
   </div>
+  <div class="srow"><span class="slabel">🖥 Layout</span>
+    <select id="setLayout">
+      <option value="classic">Classic — Sidebar</option>
+      <option value="pro">Pro — Bottom bar</option>
+    </select>
+  </div>
   <h3>Theme</h3>
   <div class="tgrid">
     <button class="tt on" data-t="">Dark</button>
@@ -912,7 +1053,7 @@ canvas{display:block;image-rendering:pixelated;}
   <!-- Title -->
   <div style="margin-bottom:18px;">
     <div style="font-family:'Syne',sans-serif;font-size:1.6rem;color:var(--acc);letter-spacing:.12em;margin-bottom:4px;">PARTICLE WORLD</div>
-    <div style="font-size:.55rem;color:#333;letter-spacing:.2em;">v1.2 BETA · A PHYSICS SANDBOX</div>
+    <div style="font-size:.55rem;color:#333;letter-spacing:.2em;">v1.2.1 BETA · A PHYSICS SANDBOX</div>
   </div>
 
   <!-- Main creator -->
@@ -1005,7 +1146,7 @@ canvas{display:block;image-rendering:pixelated;}
     Made with ☕ and a concerning amount of time
   </div>
 
-  <div class="beta-pill" style="margin-bottom:14px;">v1.2 BETA — Bug Fix + Heat Update ✦</div>
+  <div class="beta-pill" style="margin-bottom:14px;">v1.2.1 BETA — Layout + Performance Update ✦</div>
 
   <button class="op-close" onclick="document.getElementById('panCred').classList.remove('open')">Close</button>
 </div></div>
@@ -1014,17 +1155,16 @@ canvas{display:block;image-rendering:pixelated;}
 <!-- UPDATE LOG POPUP (shows on new version) -->
 <div id="updatePopup" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;">
   <div style="background:#080808;border:1px solid #2a1a4a;border-radius:8px;padding:22px 26px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;margin-bottom:4px;">🔧 v1.2 — Beta Bug Fix!</div>
-    <div style="font-size:.6rem;color:#333;margin-bottom:14px;letter-spacing:.08em;">Heat system, fire remake, critical fixes.</div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;margin-bottom:4px;">✨ v1.2.1 — Beta Update!</div>
+    <div style="font-size:.6rem;color:#333;margin-bottom:14px;letter-spacing:.08em;">Layout overhaul, performance fixes, global chat.</div>
     <div style="font-size:.63rem;color:#555;line-height:2;margin-bottom:14px;">
-      🔥 Fire completely remade — heat-driven color, turbulence, embers<br>
-      🌡 71 phase transitions — sand melts, metal becomes molten iron, glass melts<br>
-      🌋 4 new molten elements — molten iron, gold, glass, magma pool<br>
-      🕯 3 new materials — wax, plastic, charcoal<br>
-      🐛 166 broken neighbor reactions fixed (major physics bug)<br>
-      ⚙ Admin panel remade — floating, draggable, 6 tabs<br>
-      🌐 Multiplayer rewrite — cursors visible everywhere<br>
-      🔍 Element search bar in sidebar
+      🖥 Pro Layout — full-screen canvas with bottom element dock<br>
+      💬 Global Chat — talk to all players in real-time via Firebase<br>
+      💥 Explosion performance fixed — no more 1 FPS on big blasts<br>
+      🔥 Fire performance fixed — removed expensive per-cell heat radius loop<br>
+      🏷 Category tabs in Pro Layout — 18 categories, instant switching<br>
+      🔍 Pro search — search all elements across all categories<br>
+      🎚 Classic layout unchanged — switch any time in Settings
     </div>
     <button onclick="dismissUpdatePopup()" style="padding:7px 22px;background:transparent;border:1px solid #a855f7;border-radius:3px;color:#a855f7;font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;width:100%;">Let's go ✦</button>
   </div>
@@ -1081,8 +1221,39 @@ canvas{display:block;image-rendering:pixelated;}
   <h2>📋 Update Log</h2>
 
   <div class="log-entry current">
-    <div class="log-ver">v1.2 — Beta Bug Fix 🔧</div>
+    <div class="log-ver">v1.2.1 — Beta Update ✨</div>
     <div class="log-date">Latest version</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🖥 PRO LAYOUT</div>
+    <div class="log-item">New "Pro" layout mode — switch in Settings. Full-screen canvas with no sidebar, maximum drawing space</div>
+    <div class="log-item">Bottom element dock with scrollable category tabs — 18 categories including Basics, Fire, Nuclear, Liquids, Gases, Booms, Structures, Nature, Creatures, Weather, Space, Tech, Vehicles, City, Food, Special, Molten</div>
+    <div class="log-item">Element chips in the dock show a colour square and name — click to select, highlighted in purple when active</div>
+    <div class="log-item">Strip above dock has live search across all categories, brush size slider, speed slider, and particle/FPS counter</div>
+    <div class="log-item">Floating left toolbar in Pro mode — 7 icon buttons for Pause, Grid, Heat, Rain, Chaos, Clear, Menu — stays out of the way at mid-left of the canvas</div>
+    <div class="log-item">Classic sidebar layout unchanged — toggle between Classic and Pro any time in Settings, choice is saved across sessions</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">💬 GLOBAL CHAT</div>
+    <div class="log-item">Real-time global chat powered by Firebase — every player across all sessions sees the same messages</div>
+    <div class="log-item">Uses your account username when signed in, or shows as Guest otherwise</div>
+    <div class="log-item">Floating draggable chat box in the bottom-right corner — toggle with 💬 button in toolbar</div>
+    <div class="log-item">Colour-coded names — each username gets a consistent colour based on a hash of their name</div>
+    <div class="log-item">Last 50 messages load when you join. 800ms rate limit to prevent spam</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">💥 PERFORMANCE FIXES</div>
+    <div class="log-item fix">Fixed: explosions causing 1 FPS — all chain reactions (TNT, C4, gunpowder, hydrogen, nitroglycerin etc.) now deferred with setTimeout so they spread across frames instead of resolving synchronously in one frame</div>
+    <div class="log-item fix">Fixed: fire performance — removed the per-cell heat radius loop that ran 6000+ extra operations per frame with 500 fire cells. Heat spreading now handled entirely by the central diffuseHeat() pass</div>
+    <div class="log-item fix">Fixed: gas + fire was triggering a recursive explode() call per cell — now converts to fire instead</div>
+    <div class="log-item fix">Fixed: explosion particle cap — was spawning up to r×3.5 particles per blast with no global limit. Now capped at 60 total fire particles on screen at once, and r×2 max per blast</div>
+    <div class="log-item fix">Fixed: large explosions now skip cells proportionally when radius exceeds 1200 cells, keeping the visual correct while staying within frame budget</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">✨ QOL</div>
+    <div class="log-item">💬 Chat toggle button added to main toolbar</div>
+    <div class="log-item change">Version: v1.2 → v1.2.1 Beta</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-ver">v1.2 — Beta Bug Fix 🔧</div>
+    <div class="log-date">Previous version</div>
 
     <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔥 FIRE — FULL SANDBOXELS REMAKE</div>
     <div class="log-item">Fire now has temperature-driven color — cool fire is deep red, hot fire turns orange → yellow → white → blue-white at extreme heat</div>
@@ -1594,6 +1765,7 @@ canvas{display:block;image-rendering:pixelated;}
     <button class="tb" id="bLog">📋 LOG</button>
     <button class="tb" id="bAch">🏆 ACH</button>
     <button class="tb" id="bAcct">👤</button>
+    <button class="tb" id="bChat" style="color:#a855f7;border-color:#a855f722;" onclick="document.getElementById('chatPill')&&document.getElementById('chatPill').click()">💬</button>
     <button id="otmaneStarBtn" title="✦ secret" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 6px;filter:drop-shadow(0 0 4px #ffe94a);animation:starSpin 4s linear infinite;flex-shrink:0;" onclick="openOtmanePicker()">⭐</button>
     <div id="sts">
       P:<span class="sv" id="sP">0</span>
@@ -1917,6 +2089,19 @@ canvas{display:block;image-rendering:pixelated;}
       <div id="scoreDisp">⭐ 0</div>
       <div id="zhud">🧟 WAVE <span id="zwaveN">1</span> — Zombies: <span id="zcount">0</span></div>
       <div id="ahud">👾 ALIEN INVASION — UFOs active: <span id="ufocount">0</span></div>
+
+      <!-- PRO LAYOUT: floating left toolbar -->
+      <div id="proToolbar">
+        <button class="protb" id="ptPause" title="Pause">⏸</button>
+        <button class="protb" id="ptGrid" title="Grid">⊞</button>
+        <button class="protb" id="ptHeat" title="Heatmap">🌡</button>
+        <button class="protb" id="ptRain" title="Rain">🌧</button>
+        <div style="height:1px;background:#1a1a1a;margin:2px 0;"></div>
+        <button class="protb" id="ptChaos" title="Chaos" style="color:#7a3ab7;border-color:#1a0a2a;">🎲</button>
+        <button class="protb" id="ptClear" title="Clear" style="color:#442;border-color:#221;">✕</button>
+        <div style="height:1px;background:#1a1a1a;margin:2px 0;"></div>
+        <button class="protb" id="ptMenu" title="Menu">☰</button>
+      </div>
     </div>
   </div>
   <div id="btm">
@@ -1926,6 +2111,23 @@ canvas{display:block;image-rendering:pixelated;}
     <span class="h"><b>SPACE</b> pause</span>
     <span class="h"><b>H</b> heatmap</span>
     <span style="margin-left:auto;color:#161616">PARTICLE WORLD β · weight = fall speed · portals teleport · wormholes loop · beakers react · city NPCs have routines</span>
+  </div>
+
+  <!-- ══ PRO LAYOUT DOCK ══ -->
+  <div id="proDock">
+    <div id="proStrip">
+      <span class="psl">🔍</span>
+      <input type="text" id="proSearch" placeholder="search..." autocomplete="off"/>
+      <span class="psl">BRUSH</span>
+      <input type="range" id="proBrushR" min="1" max="20" value="3"/>
+      <span class="psv" id="proBrushV">3</span>
+      <span class="psl">SPEED</span>
+      <input type="range" id="proSpeedR" min="1" max="5" value="2"/>
+      <span class="psv" id="proSpeedV">2x</span>
+      <span style="margin-left:auto;font-size:.44rem;color:#1e1e1e;letter-spacing:.06em;">P:<span style="color:var(--acc)" id="proPCount">0</span> &nbsp; FPS:<span style="color:var(--acc)" id="proFps">60</span> &nbsp; <span id="proSelName" style="color:var(--acc)">sand</span></span>
+    </div>
+    <div id="proCats"></div>
+    <div id="proElems"></div>
   </div>
   <!-- MOBILE BAR -->
   <div id="mob-bar"></div>
@@ -2225,8 +2427,198 @@ function applySettings(){
   shakeOn=!!+document.getElementById('setShake').value;
   perfMode=!!+document.getElementById('setPerfMode').value;
   if(perfMode){glowOn=false;shakeOn=false;document.getElementById('setGlow').value='0';document.getElementById('setShake').value='0';}
+  const lm=document.getElementById('setLayout').value;
+  localStorage.setItem('pw_layout',lm);
+  setLayoutMode(lm);
   if(ta)resize();
 }
+
+// ── PRO LAYOUT ENGINE ──────────────────────────────────────────────
+// Build and manage the Pro bottom-dock layout
+let _proBuilt=false;
+
+// All elements grouped by category for the pro dock
+// Mirrors the sidebar categories but drives the bottom dock
+const PRO_CATS=[
+  {id:'basics',label:'Basics',elems:['sand','water','dirt','stone','gravel','snow','ice','mud','salt','glass','clay','chalk']},
+  {id:'fire',label:'🔥 Fire',elems:['fire','lava','wood','coal','oil','gunpowder','tnt','torch','thermite','napalm','napalm2','wildfire','greek_fire','ember','charcoal','wax','plastic']},
+  {id:'nuclear',label:'☢ Nuclear',elems:['uranium','plutonium','radiation','nuke','mutant','waste','lead_pb']},
+  {id:'liquids',label:'💧 Liquids',elems:['acid','poison','mercury','honey','saltwater','blood','ethanol','liquid_nitrogen','tar','mud_water','seawater']},
+  {id:'gases',label:'💨 Gases',elems:['steam','smoke','gas','methane','co2','bubble','hydrogen']},
+  {id:'explosives',label:'💥 Booms',elems:['c4','dynamite','nitroglycerin','thermite','landmine','mine','acid_bomb','cryo_bomb','sulfur','phosphorus']},
+  {id:'structures',label:'🏗 Structures',elems:['wall','concrete','brick','metal','steel','steel_beam','ceramic','obsidian','basalt','wood_plank','rope','pipe','scaffolding','glass_pane']},
+  {id:'nature',label:'🌿 Nature',elems:['plant','seed','fungus','algae','vine','tree','cactus','flower','fern','bush','mushroom','grass','coral','kelp','nutrient']},
+  {id:'creatures',label:'🐾 Creatures',elems:['person','zombie','ant','fish','bird','worm','virus','mutant','citizen','police','crab','shark','whale','rat','snake','frog','wolf','bear','spider','bat','moth']},
+  {id:'weather',label:'⛈ Weather',elems:['rain','cloud','lightning','tornado','blizzard_cloud','acid_cloud','snow_cloud']},
+  {id:'space',label:'🌌 Space',elems:['blackhole','neutronstar','plasma','dark_matter','exotic_matter','alien_beam','meteor','asteroid']},
+  {id:'tech',label:'⚡ Tech',elems:['wire','battery','pump','fan','turret','laser','conveyor','timer','gate_and','gate_or','gate_not','portal_a','portal_b','wormhole']},
+  {id:'vehicles',label:'🚗 Vehicles',elems:['car','boat','plane','tank','helicopter']},
+  {id:'city',label:'🏙 City',elems:['road','house','shop','office','park','hospital','school','bank','factory','powerplant']},
+  {id:'food',label:'🍔 Food',elems:['cheese','bread','meat','sugar_elem']},
+  {id:'special',label:'✨ Special',elems:['eraser','clone','void','solidify','melt_elem','gravity_dust','gravity_zone','magnet','crystal','sponge','acid_resist','superglue','anti_matter']},
+  {id:'molten',label:'🌋 Molten',elems:['magma_pool','molten_glass','molten_iron','molten_gold']},
+];
+
+function buildProDock(){
+  if(_proBuilt)return;
+  _proBuilt=true;
+  const catBar=document.getElementById('proCats');
+  const elemRow=document.getElementById('proElems');
+  catBar.innerHTML='';
+
+  let activeCat=PRO_CATS[0].id;
+
+  function showCat(catId){
+    activeCat=catId;
+    // Update tab highlights
+    catBar.querySelectorAll('.pcat').forEach(b=>b.classList.toggle('on',b.dataset.c===catId));
+    // Build element chips
+    elemRow.innerHTML='';
+    const cat=PRO_CATS.find(c=>c.id===catId);
+    if(!cat)return;
+    cat.elems.forEach(name=>{
+      const info=ELEM_REGISTRY[name];
+      if(!info&&!E[name])return; // skip unknowns
+      const color=info?.color||gcol(name)||'#444';
+      const label=info?.label||name.replace(/_/g,' ');
+      const btn=document.createElement('button');
+      btn.className='peb'+(sel===name?' sel':'');
+      btn.dataset.e=name;
+      btn.innerHTML=`<div class="pdot" style="background:${color}"></div><span>${label}</span>`;
+      btn.onclick=()=>{
+        sel=name;
+        document.getElementById('proSelName').textContent=name;
+        // sync classic sidebar selection
+        document.querySelectorAll('.eb.sel').forEach(b=>b.classList.remove('sel'));
+        const cls=document.querySelector(`.eb[data-e="${name}"]`);
+        if(cls)cls.classList.add('sel');
+        elemRow.querySelectorAll('.peb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name));
+      };
+      elemRow.appendChild(btn);
+    });
+  }
+
+  // Build category tabs
+  PRO_CATS.forEach(cat=>{
+    const btn=document.createElement('button');
+    btn.className='pcat'+(cat.id===activeCat?' on':'');
+    btn.dataset.c=cat.id;
+    btn.textContent=cat.label;
+    btn.onclick=()=>showCat(cat.id);
+    catBar.appendChild(btn);
+  });
+
+  showCat(activeCat);
+
+  // Pro search
+  document.getElementById('proSearch').addEventListener('input',function(){
+    const q=this.value.toLowerCase().trim();
+    if(!q){showCat(activeCat);return;}
+    elemRow.innerHTML='';
+    // Search all elements across all cats
+    const seen=new Set();
+    PRO_CATS.forEach(cat=>{
+      cat.elems.forEach(name=>{
+        if(seen.has(name))return;
+        if(!name.includes(q)&&!(ELEM_REGISTRY[name]?.label||'').toLowerCase().includes(q))return;
+        seen.add(name);
+        const info=ELEM_REGISTRY[name];
+        if(!info&&!E[name])return;
+        const color=info?.color||gcol(name)||'#444';
+        const label=info?.label||name.replace(/_/g,' ');
+        const btn=document.createElement('button');
+        btn.className='peb'+(sel===name?' sel':'');
+        btn.dataset.e=name;
+        btn.innerHTML=`<div class="pdot" style="background:${color}"></div><span>${label}</span>`;
+        btn.onclick=()=>{sel=name;document.getElementById('proSelName').textContent=name;elemRow.querySelectorAll('.peb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name));};
+        elemRow.appendChild(btn);
+      });
+    });
+  });
+
+  // Pro brush slider
+  const proBR=document.getElementById('proBrushR');
+  const proBV=document.getElementById('proBrushV');
+  proBR.addEventListener('input',()=>{bsz=+proBR.value;proBV.textContent=bsz;document.getElementById('bR').value=bsz;document.getElementById('bV').textContent=bsz;});
+
+  // Pro speed slider
+  const proSR=document.getElementById('proSpeedR');
+  const proSV=document.getElementById('proSpeedV');
+  proSR.addEventListener('input',()=>{simSpeed=+proSR.value;proSV.textContent=simSpeed+'x';document.getElementById('spR').value=simSpeed;document.getElementById('spV').textContent=simSpeed+'x';document.getElementById('spdbadge').textContent=simSpeed+'x';});
+}
+
+// ELEM_REGISTRY: lightweight name→{color,label} for the dock
+// Populated from the existing .eb buttons in the classic sidebar
+function buildElemRegistry(){
+  window.ELEM_REGISTRY={};
+  document.querySelectorAll('#ss .eb[data-e]').forEach(btn=>{
+    const name=btn.dataset.e;
+    const dot=btn.querySelector('.dot');
+    const color=dot?dot.style.background:'#888';
+    const rawLabel=btn.textContent.trim().replace(/[A-Z]$/,'').trim();
+    ELEM_REGISTRY[name]={color,label:rawLabel};
+  });
+}
+
+// Pro floating toolbar wires up to existing functions
+function wireProToolbar(){
+  const map={
+    ptPause:()=>document.getElementById('bPause').click(),
+    ptGrid:()=>document.getElementById('bGrid').click(),
+    ptHeat:()=>document.getElementById('bHeat').click(),
+    ptRain:()=>document.getElementById('bRain').click(),
+    ptChaos:()=>document.getElementById('bChaos').click(),
+    ptClear:()=>document.getElementById('bClear').click(),
+    ptMenu:()=>document.getElementById('bMenu').click(),
+  };
+  Object.entries(map).forEach(([id,fn])=>{
+    const btn=document.getElementById(id);
+    if(btn)btn.onclick=fn;
+  });
+}
+
+// Mirror classic toolbar .on states to pro toolbar
+function syncProToolbarState(){
+  const pairs=[['bPause','ptPause'],['bGrid','ptGrid'],['bHeat','ptHeat'],['bRain','ptRain']];
+  pairs.forEach(([cid,pid])=>{
+    const csrc=document.getElementById(cid);
+    const pdst=document.getElementById(pid);
+    if(csrc&&pdst){
+      const obs=new MutationObserver(()=>pdst.classList.toggle('on',csrc.classList.contains('on')));
+      obs.observe(csrc,{attributes:true,attributeFilter:['class']});
+    }
+  });
+}
+
+// Sync pro stats every second
+setInterval(()=>{
+  if(!document.body.classList.contains('layout-pro'))return;
+  const fp=document.getElementById('proFps');
+  const pc=document.getElementById('proPCount');
+  if(fp)fp.textContent=document.getElementById('sF')?.textContent||'?';
+  if(pc)pc.textContent=document.getElementById('sP')?.textContent||'0';
+},1000);
+
+function setLayoutMode(mode){
+  if(mode==='pro'){
+    document.body.classList.add('layout-pro');
+    buildElemRegistry();
+    buildProDock();
+    wireProToolbar();
+    syncProToolbarState();
+    document.getElementById('btm').style.display='none';
+  }else{
+    document.body.classList.remove('layout-pro');
+    document.getElementById('btm').style.display='';
+  }
+}
+
+// Restore layout from localStorage on load
+setTimeout(()=>{
+  const saved=localStorage.getItem('pw_layout')||'classic';
+  document.getElementById('setLayout').value=saved;
+  setLayoutMode(saved);
+},800);
 function startGame(){
   const loader=document.getElementById('loader');
   loader.classList.add('fade');
@@ -2861,97 +3253,45 @@ function diffuseHeat(){
   }
 }
 
-// ─ FIRE — Sandboxels-style physics ─
-// Fire color spectrum: deep red → orange → yellow → white core
-// Index = heat level (0=coolest, 9=hottest)
-const FIRE_COLS=[
-  '#cc1100',  // 0 — dying embers
-  '#ee2200',  // 1 — low fire
-  '#ff4400',  // 2 — normal fire
-  '#ff6600',  // 3
-  '#ff8800',  // 4
-  '#ffaa22',  // 5 — hot
-  '#ffcc44',  // 6 — very hot
-  '#ffee88',  // 7 — extremely hot
-  '#ffffff',  // 8 — plasma-hot
-  '#aaddff',  // 9 — ultraviolet (lava-hot fire)
-];
-// Embers — small bright sparks that drift above fire
+// ─ FIRE ─
+// Fast, simple fire — no expensive radius loops
+// Heat spreading is handled by diffuseHeat() centrally
+const FIRE_COLS=['#cc1100','#ee2200','#ff4400','#ff6600','#ff8800','#ffaa22','#ffcc44','#ffee88','#ffffff','#aaddff'];
 function spawnEmber(x,y){
-  if(y>0&&rnd()<.03&&emp(x,y-1)){
-    sC(x,y-1,'ember');
-    ea[id(x,y-1)]=15+0|rnd()*20;
-    mk(x,y-1);
-  }
+  if(y>0&&rnd()<.025&&emp(x,y-1)){sC(x,y-1,'ember');ea[id(x,y-1)]=15+0|rnd()*20;mk(x,y-1);}
 }
-
-// Sandboxels-style fire:
-// • temperature-driven color (FIRE_COLS indexed by heat)
-// • convection turbulence — drifts left/right as it rises
-// • embers + ash on burnout
-// • heat radius ignition (larger fires ignite from further away)
-// • proper extinguishing — water shrinks fire, steam produced
-// • fuel types affect burn time (napalm burns longer, wood slower)
 function uFire(x,y){
   const i=id(x,y);
   ea[i]-=.45;
   if(ea[i]<=0){
     cC(x,y);
-    const r=rnd();
-    if(r<.20)sC(x,y,'smoke');
-    else if(r<.25)sC(x,y,'ash2');
+    if(rnd()<.20)sC(x,y,'smoke');
+    else if(rnd()<.06)sC(x,y,'ash2');
     return;
   }
 
-  // Heat-driven color — hotter fire = whiter
-  ha[i]+=5;
-  const phase=Math.min(9,0|(ha[i]/100));
-  ca[i]=FIRE_COLS[phase];
+  // Color flicker — cycle through palette based on stamp
+  ca[i]=FIRE_COLS[(stamp+i)%6|0];
+  ha[i]+=4; // heat up neighbors via diffuseHeat, not here
 
-  // Spawn embers from hot fire
-  if(ha[i]>300)spawnEmber(x,y);
+  // Spawn embers occasionally
+  if(rnd()<.02)spawnEmber(x,y);
 
-  // === CONVECTION ===
-  // Fire rises with turbulence — offset left/right randomly
+  // Rise upward
   if(y>0){
-    const drift=(rnd()<.5)?-1:1;
-    // Try straight up
     if(emp(x,y-1)&&rnd()<.28){sw(x,y,x,y-1);return;}
-    // Diagonal rise (creates turbulence)
-    if(emp(x+drift,y-1)&&rnd()<.14){sw(x,y,x+drift,y-1);return;}
-    if(emp(x-drift,y-1)&&rnd()<.06){sw(x,y,x-drift,y-1);return;}
-    // Smoke trail behind fire
-    if(emp(x,y-1)&&rnd()<.09){sC(x,y-1,'smoke');mk(x,y-1);}
+    const d=rb()?1:-1;
+    if(emp(x+d,y-1)&&rnd()<.12){sw(x,y,x+d,y-1);return;}
+    if(emp(x,y-1)&&rnd()<.07){sC(x,y-1,'smoke');mk(x,y-1);}
   }
-  // Slight horizontal spread when blocked
   const sd=rb()?1:-1;
-  if(emp(x+sd,y)&&rnd()<.06){sw(x,y,x+sd,y);return;}
+  if(emp(x+sd,y)&&rnd()<.05){sw(x,y,x+sd,y);return;}
 
-  // === HEAT RADIATION ===
-  // Radiates heat outward — larger/hotter fire reaches further
-  const reach=Math.min(3,0|(ea[i]/50))+1;
-  for(let r=1;r<=reach;r++){
-    const heatAdd=4/(r*r);
-    for(const[dx,dy]of N4){
-      const nx=x+dx*r,ny=y+dy*r;
-      if(!inB(nx,ny))continue;
-      ha[id(nx,ny)]+=heatAdd;
-      // Ignite flammables at close range
-      const tt=gT(nx,ny);
-      if(r===1&&isFlam(tt)&&rnd()<.025){sC(nx,ny,'fire');mk(nx,ny);}
-      else if(r===2&&isFlam(tt)&&rnd()<.008){sC(nx,ny,'fire');mk(nx,ny);}
-    }
-  }
-
-  // === DIRECT NEIGHBOR REACTIONS ===
+  // Neighbor reactions — N4 only, no radius loop
   for(const[nx,ny]of n4(x,y)){
     const tt=gT(nx,ny);
-    if(tt===0)continue;
-
-    // Flammables
-    if(isFlam(tt)&&rnd()<.020){sC(nx,ny,'fire');mk(nx,ny);}
-
-    // Explosives
+    if(!tt)continue;
+    if(isFlam(tt)&&rnd()<.018){sC(nx,ny,'fire');mk(nx,ny);}
     if(tt===E.gunpowder&&rnd()<.12){cC(nx,ny);explode(nx,ny,9);}
     if(tt===E.tnt&&rnd()<.04){cC(nx,ny);explode(nx,ny,14);}
     if(tt===E.thermite&&rnd()<.016){cC(nx,ny);explode(nx,ny,12);}
@@ -2960,20 +3300,10 @@ function uFire(x,y){
     if(tt===E.landmine&&rnd()<.6){explode(nx,ny,12);addScore(50);cC(nx,ny);}
     if(tt===E.mine&&rnd()<.6){explode(nx,ny,10);cC(nx,ny);}
     if(tt===E.nuke&&rnd()<.5){cC(nx,ny);NUKE(nx,ny);}
-
-    // Gases — immediate explosion
-    if((tt===E.gas||tt===E.methane||tt===E.hydrogen)&&rnd()<.8){cC(nx,ny);explode(nx,ny,8);}
-
-    // Water extinguishes — water size reduces fire
-    if((tt===E.water||tt===E.rain||tt===E.seawater||tt===E.saltwater)&&rnd()<.30){
-      cC(nx,ny);
-      if(rnd()<.65)sC(nx,ny,'steam');
-      ea[i]-=8;
-    }
-    if((tt===E.ice||tt===E.snow)&&rnd()<.12){sC(nx,ny,'water');}
+    if((tt===E.gas||tt===E.methane||tt===E.hydrogen)&&rnd()<.8){cC(nx,ny);sC(nx,ny,'fire');}
+    if((tt===E.water||tt===E.rain||tt===E.seawater||tt===E.saltwater)&&rnd()<.30){cC(nx,ny);if(rnd()<.65)sC(nx,ny,'steam');ea[i]-=8;}
+    if((tt===E.ice||tt===E.snow)&&rnd()<.12)sC(nx,ny,'water');
     if(tt===E.liquid_nitrogen&&rnd()<.7){cC(nx,ny);ea[i]-=20;}
-
-    // Chemicals
     if(tt===E.ethanol&&rnd()<.30){explode(nx,ny,6);cC(nx,ny);}
     if(tt===E.napalm2&&rnd()<.12){sC(nx,ny,'fire');ea[id(nx,ny)]=280;}
     if(tt===E.greek_fire&&rnd()<.08)sC(nx,ny,'fire');
@@ -2981,33 +3311,12 @@ function uFire(x,y){
     if(tt===E.sulfur&&rnd()<.15){explode(nx,ny,5);cC(nx,ny);}
     if(tt===E.tar&&rnd()<.05)sC(nx,ny,'fire');
     if(tt===E.waste&&rnd()<.035)sC(nx,ny,'radiation');
-    if(tt===E.wax&&rnd()<.10){sC(nx,ny,'oil');}
-    if(tt===E.plastic&&rnd()<.05){sC(nx,ny,'smoke');}
-
-    // Bombs
-    if(tt===E.acid_bomb){
-      for(let r=0;r<25;r++){const ax=nx+(rb()?1:-1)*(1+0|rnd()*7),ay=ny+(0|rnd()*7)-3;if(inB(ax,ay))sC(ax,ay,'acid');}
-      cC(nx,ny);
-    }
-    if(tt===E.cryo_bomb){
-      for(let cx2=-7;cx2<=7;cx2++)for(let cy2=-7;cy2<=7;cy2++){
-        if(cx2*cx2+cy2*cy2>49)continue;
-        const bx2=nx+cx2,by2=ny+cy2;
-        if(inB(bx2,by2)){if(gT(bx2,by2)===E.fire)cC(bx2,by2);ha[id(bx2,by2)]=0;}
-      }
-      cC(nx,ny);
-    }
-
-    // Creatures
-    if((tt===E.person||tt===E.zombie||tt===E.ant||tt===E.worm||
-        tt===E.citizen||tt===E.police||tt===E.rat||tt===E.snake||
-        tt===E.frog||tt===E.wolf||tt===E.bear||tt===E.spider||
-        tt===E.bat||tt===E.moth)&&rnd()<.18){
-      cC(nx,ny);sC(nx,ny,'fire');
-    }
+    if(tt===E.wax&&rnd()<.10)sC(nx,ny,'oil');
+    if(tt===E.plastic&&rnd()<.05)sC(nx,ny,'smoke');
+    if(tt===E.acid_bomb){for(let ri=0;ri<25;ri++){const ax=nx+(rb()?1:-1)*(1+0|rnd()*7),ay=ny+(0|rnd()*7)-3;if(inB(ax,ay))sC(ax,ay,'acid');}cC(nx,ny);}
+    if(tt===E.cryo_bomb){for(let cx2=-7;cx2<=7;cx2++)for(let cy2=-7;cy2<=7;cy2++){if(cx2*cx2+cy2*cy2>49)continue;const bx2=nx+cx2,by2=ny+cy2;if(inB(bx2,by2)){if(gT(bx2,by2)===E.fire)cC(bx2,by2);ha[id(bx2,by2)]=0;}}cC(nx,ny);}
+    if((tt===E.person||tt===E.zombie||tt===E.ant||tt===E.worm||tt===E.citizen||tt===E.police||tt===E.rat||tt===E.snake||tt===E.frog||tt===E.wolf||tt===E.bear||tt===E.spider||tt===E.bat||tt===E.moth)&&rnd()<.18){cC(nx,ny);sC(nx,ny,'fire');}
   }
-
-  // Heat shimmer VFX
   addShimmer(x,y);
 }
 
@@ -3020,8 +3329,12 @@ function addShockwave(x,y,r,force=1){
   shockwaves.push({x:x*CELL+CELL/2,y:y*CELL+CELL/2,r:0,maxR:r*CELL*1.8,force,life:1,born:stamp});
 }
 function addFireParticles(cx,cy,r,count=18){
-  for(let i=0;i<count;i++){
-    const a=Math.random()*Math.PI*2,spd=1.5+Math.random()*r*.35;
+  // Hard cap: never more than 60 total fire particles on screen
+  const budget=Math.min(count,60-fireParticles.length);
+  if(budget<=0)return;
+  const actual=Math.min(budget,0|r*2.5); // scale with radius but stay lean
+  for(let i=0;i<actual;i++){
+    const a=Math.random()*Math.PI*2,spd=1.5+Math.random()*r*.28;
     fireParticles.push({x:cx*CELL,y:cy*CELL,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1.5,
       life:1,col:['#ff6020','#ff8030','#ffcc00','#ff3800','#fff0a0'][0|Math.random()*5],
       sz:1.5+Math.random()*2.5});
@@ -3056,13 +3369,19 @@ function renderShockwaves(ctx2){
 function explode(cx,cy,r,f=1){
   chainCount+=r*2;showChain();if(shakeOn)shake(Math.min(13,r));
   addShockwave(cx,cy,r,f);
-  addFireParticles(cx,cy,r,0|r*3.5);
-  // Flash
+  addFireParticles(cx,cy,r,0|r*2); // was r*3.5 — too many particles
+  // Flash overlay
   const ov=document.getElementById('ro');
   ov.style.background=`radial-gradient(ellipse at ${cx*CELL/canvas.width*100}% ${cy*CELL/canvas.height*100}%,rgba(255,200,80,.45)0%,rgba(255,80,0,.2)40%,transparent 75%)`;
   ov.style.opacity='1';setTimeout(()=>{ov.style.opacity='0';},180);
+
+  // Cell budget: large explosions skip some cells to avoid O(r²) freeze
+  const totalCells=(2*r+1)*(2*r+1);
+  const skipChance=totalCells>1200?1-1200/totalCells:0; // skip up to 75% of cells for huge blasts
+
   for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
     const d=Math.sqrt(dx*dx+dy*dy);if(d>r)continue;
+    if(skipChance>0&&rnd()<skipChance)continue; // budget skip
     const x=cx+dx,y=cy+dy;if(!inB(x,y))continue;
     const t=gT(x,y);
     if(t===E.wall||t===E.concrete||t===E.blackhole||t===E.neutronstar)continue;
@@ -3070,23 +3389,24 @@ function explode(cx,cy,r,f=1){
     const p=(1-d/r)*f;
     if(d<r*.35){cC(x,y);if(rnd()<.42*p)sC(x,y,'fire');}
     else if(rnd()<.48*p){if(t)cC(x,y);if(rnd()<.18)sC(x,y,'fire');}
-    if(t===E.tnt&&(dx||dy)&&rnd()<.32)setTimeout(()=>explode(x,y,14,1.2),25+rnd()*60);
-    if(t===E.gunpowder){cC(x,y);explode(x,y,8);}
-    // ── NEW FIRE REACTIONS ──
-    if(t===E.c4&&rnd()<.15){explode(x,y,22);addScore(100);cC(x,y);}
+
+    // Chain reactions — use setTimeout to defer so they don't all process this frame
+    if(t===E.tnt&&(dx||dy)&&rnd()<.32)setTimeout(()=>explode(x,y,14,1.2),30+rnd()*80);
+    if(t===E.gunpowder&&rnd()<.5){cC(x,y);setTimeout(()=>explode(x,y,8),15+rnd()*30);}
+    if(t===E.c4&&rnd()<.15){setTimeout(()=>{explode(x,y,22);addScore(100);cC(x,y);},20+rnd()*40);}
     if(t===E.napalm2&&rnd()<.12){sC(x,y,'fire');ea[id(x,y)]=200;}
-    if(t===E.ethanol&&rnd()<.2){explode(x,y,6);cC(x,y);}
-    if(t===E.hydrogen&&rnd()<.3){explode(x,y,12);cC(x,y);}
-    if(t===E.nitroglycerin&&rnd()<.4){explode(x,y,14);cC(x,y);}
-    if(t===E.acid_bomb&&rnd()<.2){for(let r=0;r<20;r++){const ax=x+(rb()?1:-1)*(1+0|rnd()*6),ay=y+(rb()?1:-1)*(1+0|rnd()*6);if(inB(ax,ay))sC(ax,ay,'acid');}cC(x,y);}
+    if(t===E.ethanol&&rnd()<.2){setTimeout(()=>{explode(x,y,6);cC(x,y);},10+rnd()*25);}
+    if(t===E.hydrogen&&rnd()<.3){setTimeout(()=>{explode(x,y,12);cC(x,y);},10+rnd()*25);}
+    if(t===E.nitroglycerin&&rnd()<.4){setTimeout(()=>{explode(x,y,14);cC(x,y);},5+rnd()*20);}
+    if(t===E.acid_bomb&&rnd()<.2){for(let ri=0;ri<20;ri++){const ax=x+(rb()?1:-1)*(1+0|rnd()*6),ay=y+(rb()?1:-1)*(1+0|rnd()*6);if(inB(ax,ay))sC(ax,ay,'acid');}cC(x,y);}
     if(t===E.cryo_bomb&&rnd()<.3){for(let dx2=-6;dx2<=6;dx2++)for(let dy2=-6;dy2<=6;dy2++){if(dx2*dx2+dy2*dy2>36)continue;const bx=x+dx2,by=y+dy2;if(inB(bx,by)&&(gT(bx,by)===E.fire||gT(bx,by)===E.lava))sC(bx,by,'ice');}cC(x,y);}
-    if(t===E.landmine&&rnd()<.4){explode(x,y,12);addScore(50);cC(x,y);}
-    if(t===E.mine&&rnd()<.4){explode(x,y,10);cC(x,y);}
-    if(t===E.sulfur&&rnd()<.15){explode(x,y,6);cC(x,y);}
+    if(t===E.landmine&&rnd()<.4){setTimeout(()=>{explode(x,y,12);addScore(50);cC(x,y);},15+rnd()*30);}
+    if(t===E.mine&&rnd()<.4){setTimeout(()=>{explode(x,y,10);cC(x,y);},15+rnd()*30);}
+    if(t===E.sulfur&&rnd()<.15){setTimeout(()=>{explode(x,y,6);cC(x,y);},10+rnd()*25);}
     if(t===E.phosphorus||t===E.wildfire){if(rnd()<.1)sC(x,y,'fire');}
-    if(t===E.tar&&rnd()<.05){sC(x,y,'fire');}
-    if(t===E.greek_fire&&rnd()<.1){sC(x,y,'fire');}
-    if(t===E.gas||t===E.methane){cC(x,y);explode(x,y,7);}
+    if(t===E.tar&&rnd()<.05)sC(x,y,'fire');
+    if(t===E.greek_fire&&rnd()<.1)sC(x,y,'fire');
+    if(t===E.gas||t===E.methane){cC(x,y);if(rnd()<.5)sC(x,y,'fire');} // was recursive explode — now just fire
     if(t===E.uranium||t===E.plutonium){cC(x,y);sC(x,y,'radiation');gRad=Math.min(100,gRad+4);}
     if(t===E.house||t===E.shop||t===E.office){if(rnd()<.5)sC(x,y,'fire');}
   }
@@ -5717,7 +6037,7 @@ function uSulfur(x,y){
 // ══════════════════════════════════════════
 //  USER ACCOUNT SYSTEM  v1.0
 // ══════════════════════════════════════════
-const GAME_VERSION='1.2';
+const GAME_VERSION='1.2.1';
 let currentUser=null;
 function acctKey(user,key){return`pw_${user}_${key}`;}
 function acctSave(key,val){if(currentUser)localStorage.setItem(acctKey(currentUser,key),JSON.stringify(val));}
@@ -7364,7 +7684,7 @@ paint=function(e){
 //  PARTICLE WORLD — MULTIPLAYER (Firebase)
 // ══════════════════════════════════════════
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getDatabase,ref,set,get,onValue,onChildAdded,push,remove,onDisconnect,off}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import{getDatabase,ref,set,get,onValue,onChildAdded,push,remove,onDisconnect,off,query,limitToLast,orderByChild}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ── Firebase config ──
 const FB_CFG={
@@ -7380,7 +7700,11 @@ const FB_CFG={
 let fbApp=null,fbDb=null,fbReady=false;
 function fbInit(){
   if(fbReady)return;
-  try{fbApp=initializeApp(FB_CFG);fbDb=getDatabase(fbApp);window._fbDb=fbDb;fbReady=true;}
+  try{fbApp=initializeApp(FB_CFG);fbDb=getDatabase(fbApp);window._fbDb=fbDb;fbReady=true;
+    window._fbReady=true;
+    // Expose Firebase functions for the global chat system
+    window._fbImports={ref,set,get,onValue,onChildAdded,push,remove,query,limitToLast,orderByChild};
+  }
   catch(e){console.warn('Firebase init failed:',e);mpSetStatus('✗ Firebase not configured — see console','#ff4444');}
 }
 
@@ -7681,6 +8005,8 @@ window.adminClearAnnouncement=async function(){
 
 // Start listening — Firebase module runs after DOM is ready so fbReady is true here
 announceInit();
+// Init Firebase early so chat system can use it
+fbInit();
 
 // ══════════════════════════════════════════
 //  BAN SYSTEM (Firebase)
@@ -8100,6 +8426,133 @@ document.addEventListener('keydown',ev=>{
   _otBuf=(_otBuf+ev.key.toLowerCase()).slice(-6);
   if(_otBuf==='otmane'){_otBuf='';openOtmanePicker();}
 });
+
+// ══════════════════════════════════════════
+//  GLOBAL CHAT (Firebase)
+// ══════════════════════════════════════════
+(function initGlobalChat(){
+  // Build the chat UI
+  const chatWrapper=document.createElement('div');
+  chatWrapper.id='chatWrapper';
+  chatWrapper.innerHTML=`
+<div id="chatShell" style="position:fixed;bottom:28px;left:10px;z-index:8500;font-family:'DM Mono',monospace;display:flex;flex-direction:column;align-items:flex-start;">
+  <!-- collapsed pill toggle -->
+  <button id="chatPill" style="background:#0a0a0a;border:1px solid #1a1a2a;border-radius:20px;color:#2a1a4a;font-family:'DM Mono',monospace;font-size:.5rem;padding:4px 10px;cursor:pointer;letter-spacing:.1em;transition:all .15s;display:flex;align-items:center;gap:5px;">
+    <span id="chatPillDot" style="width:5px;height:5px;border-radius:50%;background:#2a1a4a;flex-shrink:0;transition:background .2s;"></span>
+    <span id="chatPillLabel">💬 CHAT</span>
+    <span id="chatUnreadBadge" style="display:none;background:#a855f7;color:#fff;font-size:.38rem;padding:1px 4px;border-radius:8px;margin-left:2px;"></span>
+  </button>
+  <!-- expandable panel, hidden by default -->
+  <div id="chatBox" style="display:none;flex-direction:column;width:240px;background:#070707;border:1px solid #141420;border-radius:6px;margin-bottom:5px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.8);">
+    <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:6px 8px;max-height:140px;min-height:40px;display:flex;flex-direction:column;gap:2px;scrollbar-width:none;"></div>
+    <div style="display:flex;border-top:1px solid #0e0e1a;padding:4px 6px;gap:4px;align-items:center;">
+      <input id="chatInput" placeholder="say something..." maxlength="120" autocomplete="off"
+        style="flex:1;background:transparent;border:none;color:#666;font-family:'DM Mono',monospace;font-size:.53rem;outline:none;"/>
+      <button id="chatSend" style="background:transparent;border:none;color:#2a1a4a;font-size:.65rem;padding:0 4px;cursor:pointer;line-height:1;">↵</button>
+    </div>
+  </div>
+</div>`;
+  document.body.appendChild(chatWrapper);
+
+  let chatOpen=false;
+  let chatInited=false;
+  let unread=0;
+  const chatShell=document.getElementById('chatShell');
+  const chatBox=document.getElementById('chatBox');
+  const chatMsgs=document.getElementById('chatMsgs');
+  const chatInput=document.getElementById('chatInput');
+  const chatPill=document.getElementById('chatPill');
+  const chatPillDot=document.getElementById('chatPillDot');
+  const chatUnreadBadge=document.getElementById('chatUnreadBadge');
+
+  function toggleChat(){
+    chatOpen=!chatOpen;
+    chatBox.style.display=chatOpen?'flex':'none';
+    chatPill.style.borderColor=chatOpen?'#a855f733':'#1a1a2a';
+    chatPill.style.color=chatOpen?'#555':'#2a1a4a';
+    chatPillDot.style.background=chatOpen?'#a855f7':'#2a1a4a';
+    if(chatOpen){
+      unread=0;chatUnreadBadge.style.display='none';
+      setTimeout(()=>{chatInput.focus();chatMsgs.scrollTop=chatMsgs.scrollHeight;},50);
+    }
+  }
+  chatPill.addEventListener('click',toggleChat);
+
+  // Close chat when clicking canvas (so it doesn't block play)
+  document.getElementById('gc').addEventListener('mousedown',()=>{
+    if(chatOpen){toggleChat();}
+  });
+
+  function appendMsg(name,text,color,ts){
+    const d=document.createElement('div');
+    d.style.cssText='font-size:.51rem;line-height:1.5;word-break:break-word;';
+    const time=ts?new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+    d.innerHTML=`<span style="color:${color||'#a855f7'};">${escH(name)}</span> <span style="color:#222;font-size:.44rem;">${time}</span><br><span style="color:#555;">${escH(text)}</span>`;
+    chatMsgs.appendChild(d);
+    chatMsgs.scrollTop=chatMsgs.scrollHeight;
+    // keep max 80 messages
+    while(chatMsgs.children.length>80)chatMsgs.removeChild(chatMsgs.firstChild);
+    // Unread badge when closed
+    if(!chatOpen&&name!=='🌍 System'){
+      unread++;
+      chatUnreadBadge.textContent=unread>9?'9+':unread;
+      chatUnreadBadge.style.display='inline-block';
+      chatPillDot.style.background='#a855f7';
+    }
+  }
+  function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  // Name color based on username hash
+  function nameColor(name){
+    let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))&0xffffff;
+    const cols=['#a855f7','#38bdf8','#34d399','#f472b6','#fb923c','#facc15','#c084fc','#22d3ee'];
+    return cols[Math.abs(h)%cols.length];
+  }
+
+  function initChatListeners(){
+    if(chatInited||!window._fbReady||!window._fbImports)return;
+    chatInited=true;
+    const {ref:fbRef,onChildAdded:fbOnChild,query:fbQuery,limitToLast:fbLTL}=window._fbImports;
+    const chatRef=fbRef(window._fbDb,'globalChat');
+    const recent=fbQuery(chatRef,fbLTL(50));
+    fbOnChild(recent,snap=>{
+      const m=snap.val();
+      if(m&&m.name&&m.text)appendMsg(m.name,m.text,nameColor(m.name),m.ts);
+    });
+  }
+
+  async function sendMsg(){
+    const text=chatInput.value.trim();chatInput.value='';
+    if(!text)return;
+    const name=currentUser||'Guest';
+    const now=Date.now();
+    if(window._lastChatTs&&now-window._lastChatTs<800)return;
+    window._lastChatTs=now;
+
+    if(window._fbReady&&window._fbImports){
+      try{
+        const {ref:fbRef,push:fbPush}=window._fbImports;
+        await fbPush(fbRef(window._fbDb,'globalChat'),{name,text,ts:now});
+      }catch(e){appendMsg(name,text,nameColor(name),now);}
+    }else{
+      appendMsg(name,text,nameColor(name),now);
+    }
+  }
+
+  chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendMsg();}});
+  document.getElementById('chatSend').addEventListener('click',sendMsg);
+
+  // Keep trying to init chat until Firebase is ready (Firebase module loads async)
+  function tryInitChat(){
+    if(window._fbReady&&window._fbImports){
+      initChatListeners();
+      appendMsg('🌍 System','Welcome to Particle World! Chat is global 🔥','#444',null);
+    }else{
+      setTimeout(tryInitChat,500);
+    }
+  }
+  setTimeout(tryInitChat,1500);
+})();
 </script>
 
 </html>
