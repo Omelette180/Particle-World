@@ -1,190 +1,107 @@
 /**
  * PARTICLE WORLD v2.0 — js/account.js
- * User accounts, login, save/load via Firebase.
+ * Extracted from v1.2.3. Full account system preserved.
  */
 
-'use strict';
+// ══════════════════════════════════════════
+//  USER ACCOUNT SYSTEM  v1.0
+// ══════════════════════════════════════════
+const GAME_VERSION='1.2.3';
+let currentUser=null;
+function acctKey(user,key){return`pw_${user}_${key}`;}
+function acctSave(key,val){if(currentUser)localStorage.setItem(acctKey(currentUser,key),JSON.stringify(val));}
+function acctLoad(key,def=null){if(!currentUser)return def;try{const v=localStorage.getItem(acctKey(currentUser,key));return v!==null?JSON.parse(v):def;}catch(e){return def;}}
+function allUsers(){try{return JSON.parse(localStorage.getItem('pw_users')||'{}');}catch(e){return{};}}
+function saveUsers(u){localStorage.setItem('pw_users',JSON.stringify(u));}
 
-const Account = (() => {
-  let _username = null;
-  let _isAdmin  = false;
-
-  const ADMIN_CODE  = 'omariscool';
-  const OWNER_NAMES = ['PW_dev'];
-
-  function _isOwner(name) { return OWNER_NAMES.includes(name); }
-
-  function _hash(str) {
-    let h = 5381;
-    for (let i = 0; i < str.length; i++) h = (h * 33 ^ str.charCodeAt(i)) >>> 0;
-    return h.toString(16);
+function acctRegister(){
+  const user=document.getElementById('acctUser').value.trim();const pass=document.getElementById('acctPass').value;
+  const msg=document.getElementById('acctMsg');
+  if(!user||user.length<2){msg.textContent='Username must be 2+ characters.';return;}
+  if(!pass||pass.length<4){msg.textContent='Password must be 4+ characters.';return;}
+  const users=allUsers();if(users[user]){msg.textContent='Username taken.';return;}
+  const hash=btoa(pass+user+'pw_salt_v1').slice(0,24);
+  users[user]={hash,created:Date.now()};saveUsers(users);
+  msg.style.color='#44ffaa';msg.textContent='Account created!';setTimeout(()=>loginUser(user),500);
+}
+function acctLoginAction(){
+  const user=document.getElementById('acctUser').value.trim();const pass=document.getElementById('acctPass').value;
+  const msg=document.getElementById('acctMsg');const users=allUsers();
+  if(!users[user]){msg.textContent='Account not found.';return;}
+  const hash=btoa(pass+user+'pw_salt_v1').slice(0,24);
+  if(users[user].hash!==hash){msg.textContent='Wrong password.';return;}
+  loginUser(user);
+}
+function loginUser(user){
+  currentUser=user;localStorage.setItem('pw_lastUser',user);
+  document.getElementById('acctLoggedOut').style.display='none';
+  document.getElementById('acctLoggedIn').style.display='block';
+  const nameEl=document.getElementById('acctName');
+  nameEl.textContent=user;
+  if(user==='PW_dev'){
+    nameEl.style.cssText='background:linear-gradient(90deg,#ffd700,#ffaa00,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:"Syne",sans-serif;font-weight:700;font-size:.85rem;';
+    nameEl.textContent='👑 PW_dev';
+    // Auto-unlock admin for PW_dev
+    adminUnlocked=true;
+    document.getElementById('adminToggleBtn').classList.add('show');
+    document.getElementById('adminToggleBtn').style.cssText+='color:#ffd700;border-color:#ffd70044;text-shadow:0 0 8px #ffd700;';
+    // Unlock all achievements
+    setTimeout(()=>{
+      ACHIEVEMENTS.forEach(a=>achUnlocked.add(a.id));
+      renderAchList&&renderAchList();
+      refreshAcctUI&&refreshAcctUI();
+    },500);
   }
-
-  function _setLoggedIn(username, isAdmin) {
-    _username = username;
-    _isAdmin  = isAdmin || _isOwner(username);
-    window._pwUsername = username;
-    window._pwIsAdmin  = _isAdmin;
-
-    document.getElementById('acctLoggedOut').style.display = 'none';
-    document.getElementById('acctLoggedIn').style.display  = 'block';
-    document.getElementById('acctName').textContent        = username;
-
-    if (_isOwner(username)) {
-      document.getElementById('acctName').style.background = 'linear-gradient(90deg,#ffcc00,#ff8800,#ff4400)';
-      document.getElementById('acctName').style.webkitBackgroundClip = 'text';
-      document.getElementById('acctName').style.webkitTextFillColor  = 'transparent';
-    }
-
-    if (_isAdmin) {
-      document.getElementById('btnAdmin').style.display = '';
-    }
+  const saved=acctLoad('gamedata',null);
+  if(saved){
+    if(saved.score){score=saved.score;document.getElementById('scoreDisp').textContent='⭐ '+score.toLocaleString();document.getElementById('achScoreTotal').textContent=score.toLocaleString();}
+    if(saved.achievements){saved.achievements.forEach(id=>achUnlocked.add(id));renderAchList();}
   }
+  const settings=acctLoad('settings',null);
+  if(settings){simSpeed=settings.simSpeed||simSpeed;glowOn=settings.glowOn!==undefined?settings.glowOn:glowOn;shakeOn=settings.shakeOn!==undefined?settings.shakeOn:shakeOn;}
+  refreshAcctUI();document.getElementById('acctMsg').style.color='#44ffaa';document.getElementById('acctMsg').textContent='✦ Signed in!';
+  setTimeout(()=>window._banCheckUser&&window._banCheckUser(user),800);
+}
+function refreshAcctUI(){
+  if(!currentUser)return;
+  document.getElementById('acctScore').textContent=score.toLocaleString();
+  document.getElementById('acctAchCount').textContent=achUnlocked.size;
+  const saves=acctLoad('worldsaves',[]);
+  document.getElementById('acctSaveCount').textContent=saves.length;
+  const sl=document.getElementById('acctSaveList');sl.innerHTML='';
+  saves.forEach((s,i)=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #0a0a0a;';
+    row.innerHTML=`<div style="flex:1;font-size:.6rem;color:#555;">${s.name||'World '+i}</div><div style="font-size:.52rem;color:#2a2a2a;">${new Date(s.ts).toLocaleDateString()}</div><button style="font-size:.52rem;padding:2px 7px;border:1px solid #1a1a1a;background:transparent;color:#444;cursor:pointer;border-radius:2px;" onclick="loadAccountSave(${i})">Load</button><button style="font-size:.52rem;padding:2px 7px;border:1px solid #1a1a1a;background:transparent;color:#333;cursor:pointer;border-radius:2px;" onclick="deleteAccountSave(${i})">✕</button>`;
+    sl.appendChild(row);
+  });
+}
+function saveEverything(){
+  if(!currentUser){document.getElementById('acctSaveMsg').textContent='Sign in first!';document.getElementById('acctSaveMsg').style.color='#ff4444';return;}
+  acctSave('gamedata',{score,achievements:[...achUnlocked],version:GAME_VERSION});
+  acctSave('settings',{simSpeed,glowOn,shakeOn});
+  const worldData=[];for(let i=0;i<ta.length;i++)if(ta[i])worldData.push([i,ta[i],ca[i],Math.round(ea[i]),Math.round(ha[i])]);
+  const saves=acctLoad('worldsaves',[]);
+  const name=prompt('Name this save:','World '+(saves.length+1))||'World '+(saves.length+1);
+  saves.push({name,ts:Date.now(),world:worldData,cols:COLS,rows:ROWS});
+  if(saves.length>10)saves.shift();
+  acctSave('worldsaves',saves);
+  refreshAcctUI();
+  const m=document.getElementById('acctSaveMsg');m.style.color='#44ffaa';m.textContent='✦ Everything saved!';setTimeout(()=>m.textContent='',2500);
+}
+function loadAccountSave(idx){
+  const saves=acctLoad('worldsaves',[]);const s=saves[idx];if(!s)return;
+  ta.fill(0);ca.fill('#040404');ea.fill(0);da.fill(0);ha.fill(0);
+  s.world.forEach(([i,t,c,e,h])=>{if(s.cols===COLS&&s.rows===ROWS){ta[i]=t;ca[i]=c;ea[i]=e;ha[i]=h;}else{const x=i%s.cols,y=0|i/s.cols;if(x<COLS&&y<ROWS){const ni=id(x,y);ta[ni]=t;ca[ni]=c;ea[ni]=e;ha[ni]=h;}}});
+  document.getElementById('panAccount').classList.remove('open');
+}
+function deleteAccountSave(idx){const saves=acctLoad('worldsaves',[]);saves.splice(idx,1);acctSave('worldsaves',saves);refreshAcctUI();}
+function acctSignOut(){currentUser=null;localStorage.removeItem('pw_lastUser');document.getElementById('acctLoggedOut').style.display='block';document.getElementById('acctLoggedIn').style.display='none';}
 
-  function _msg(el, text, color = '#ff4444') {
-    const el2 = document.getElementById(el);
-    if (el2) { el2.textContent = text; el2.style.color = color; }
-  }
-
-  async function login(username, password) {
-    const fb = window._fb;
-    if (!fb?.ready) return _msg('acctMsg', 'Firebase not ready');
-    const { ref, get, db } = fb;
-
-    try {
-      const snap = await get(ref(db, `users/${username}`));
-      if (!snap.exists()) return _msg('acctMsg', 'User not found');
-      const data = snap.val();
-      if (data.passHash !== _hash(password)) return _msg('acctMsg', 'Wrong password');
-      const isAdmin = data.admin || username === 'PW_dev';
-      _setLoggedIn(username, isAdmin);
-      localStorage.setItem('pw_session', JSON.stringify({ username, passHash: _hash(password) }));
-      _msg('acctMsg', 'Signed in!', '#44ffaa');
-    } catch(e) { _msg('acctMsg', 'Error: ' + e.message); }
-  }
-
-  async function register(username, password) {
-    const fb = window._fb;
-    if (!fb?.ready) return _msg('acctMsg', 'Firebase not ready');
-    if (username.length < 2) return _msg('acctMsg', 'Username too short');
-    if (password.length < 4) return _msg('acctMsg', 'Password too short');
-    if (/[^a-zA-Z0-9_]/.test(username)) return _msg('acctMsg', 'Letters, numbers, _ only');
-    const { ref, get, set, db } = fb;
-
-    try {
-      const snap = await get(ref(db, `users/${username}`));
-      if (snap.exists()) return _msg('acctMsg', 'Username taken');
-      await set(ref(db, `users/${username}`), {
-        passHash: _hash(password),
-        created: Date.now(),
-        admin: false,
-      });
-      _setLoggedIn(username, false);
-      localStorage.setItem('pw_session', JSON.stringify({ username, passHash: _hash(password) }));
-      _msg('acctMsg', 'Account created!', '#44ffaa');
-    } catch(e) { _msg('acctMsg', 'Error: ' + e.message); }
-  }
-
-  function signOut() {
-    _username = null;
-    _isAdmin  = false;
-    window._pwUsername = null;
-    window._pwIsAdmin  = false;
-    localStorage.removeItem('pw_session');
-    document.getElementById('acctLoggedOut').style.display = '';
-    document.getElementById('acctLoggedIn').style.display  = 'none';
-    document.getElementById('btnAdmin').style.display      = 'none';
-    document.getElementById('acctMsg').textContent         = '';
-  }
-
-  async function saveAll() {
-    if (!_username) return;
-    const fb = window._fb;
-    if (!fb?.ready) return;
-    const { ref, set, db } = fb;
-    const saveData = {
-      ts: Date.now(),
-      version: '2.0.0',
-    };
-    try {
-      await set(ref(db, `users/${_username}/savedata`), saveData);
-      _msg('acctSaveMsg', 'Saved!', '#44ffaa');
-      setTimeout(() => _msg('acctSaveMsg', ''), 2000);
-    } catch(e) { _msg('acctSaveMsg', 'Save failed: ' + e.message); }
-  }
-
-  function buildPanel() {
-    const panels = document.getElementById('panels');
-    if (!panels) return;
-    const div = document.createElement('div');
-    div.className = 'opanel';
-    div.id = 'panAccount';
-    div.innerHTML = `
-    <div class="opbox" style="max-width:440px;">
-      <h2>👤 Account</h2>
-      <div id="acctLoggedOut">
-        <p style="font-size:.63rem;color:#444;margin-bottom:12px;">Create an account to save your settings and sync across devices.</p>
-        <div style="margin-bottom:8px;">
-          <div class="srow"><span class="slabel">Username</span><input class="srow select" id="acctUser" placeholder="username" maxlength="24" style="background:#0a0a0a;border:1px solid #1a1a1a;color:#bbb;padding:3px 6px;border-radius:3px;font-family:'DM Mono',monospace;font-size:.63rem;outline:none;"></div>
-          <div class="srow"><span class="slabel">Password</span><input class="srow select" id="acctPass" type="password" placeholder="password" maxlength="32" style="background:#0a0a0a;border:1px solid #1a1a1a;color:#bbb;padding:3px 6px;border-radius:3px;font-family:'DM Mono',monospace;font-size:.63rem;outline:none;"></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:10px;">
-          <button class="menu-btn primary" id="acctLogin" style="width:auto;padding:8px 16px;">Sign In</button>
-          <button class="menu-btn" id="acctRegister" style="width:auto;padding:8px 16px;">Create Account</button>
-        </div>
-        <div id="acctMsg" style="font-size:.6rem;color:#ff4444;margin-top:6px;min-height:1em;"></div>
-      </div>
-      <div id="acctLoggedIn" style="display:none;">
-        <div style="font-size:.7rem;color:#ccc;margin-bottom:10px;">Signed in as <span id="acctName" style="color:#a855f7;font-family:'Syne',sans-serif;"></span></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="menu-btn primary" id="acctSaveAll" style="width:auto;padding:8px 16px;">💾 Save</button>
-          <button class="menu-btn" id="acctSignOut" style="width:auto;padding:8px 16px;margin-left:auto;">Sign Out</button>
-        </div>
-        <div id="acctSaveMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
-      </div>
-      <button class="op-close" onclick="closePanels()">Close</button>
-    </div>`;
-    panels.appendChild(div);
-
-    // Add menu button
-    document.getElementById('btnAccount')?.addEventListener('click', () => showPanel('panAccount'));
-
-    // Wire up buttons
-    document.getElementById('acctLogin')?.addEventListener('click', () => {
-      login(document.getElementById('acctUser').value.trim(),
-            document.getElementById('acctPass').value);
-    });
-    document.getElementById('acctRegister')?.addEventListener('click', () => {
-      register(document.getElementById('acctUser').value.trim(),
-               document.getElementById('acctPass').value);
-    });
-    document.getElementById('acctSignOut')?.addEventListener('click', signOut);
-    document.getElementById('acctSaveAll')?.addEventListener('click', saveAll);
-  }
-
-  function init() {
-    buildPanel();
-
-    // Restore session
-    const stored = localStorage.getItem('pw_session');
-    if (stored) {
-      try {
-        const { username } = JSON.parse(stored);
-        if (username) {
-          const wait = setInterval(() => {
-            if (!window._fb?.ready) return;
-            clearInterval(wait);
-            const { ref, get, db } = window._fb;
-            get(ref(db, `users/${username}`)).then(snap => {
-              if (snap.exists()) _setLoggedIn(username, snap.val().admin);
-            }).catch(() => {});
-          }, 300);
-        }
-      } catch(e) {}
-    }
-  }
-
-  return { init, login, register, signOut, saveAll };
-})();
-
-document.addEventListener('DOMContentLoaded', () => setTimeout(() => Account.init(), 600));
+setTimeout(()=>{const last=localStorage.getItem('pw_lastUser');if(last&&allUsers()[last])loginUser(last);},900);
+document.getElementById('acctRegister').onclick=acctRegister;
+document.getElementById('acctLogin').onclick=acctLoginAction;
+document.getElementById('acctSignOut').onclick=acctSignOut;
+document.getElementById('acctSaveAll').onclick=saveEverything;
+document.getElementById('acctLoadAll').onclick=refreshAcctUI;
+document.getElementById('bAcct').onclick=()=>{refreshAcctUI();document.getElementById('panAccount').classList.add('open');};
+document.getElementById('mAccount').onclick=()=>document.getElementById('panAccount').classList.add('open');
