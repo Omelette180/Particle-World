@@ -334,31 +334,26 @@ function initKeyboard() {
 
 // ── INIT ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Wait for PW to be ready
-  const ready = setInterval(() => {
-    if (!window.PW) return;
-    clearInterval(ready);
+  // PW is set at module level in core.js so it's available immediately
+  buildPanels();
+  buildSidebar();
+  initSearch();
+  initToolbar();
+  initTooltip();
+  initPositionDisplay();
+  initKeyboard();
+  initGame();
 
-    buildPanels();
-    buildSidebar();
-    initSearch();
-    initToolbar();
-    initTooltip();
-    initPositionDisplay();
-    initKeyboard();
-    initGame();
+  // Default selection
+  selectElement('sand');
 
-    // Show game, hide loader
-    PW_setLoadProgress(100, 'Ready!');
+  // Show game, hide loader
+  PW_setLoadProgress(100, 'Ready!');
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('fade');
+    document.getElementById('game').classList.add('show');
     setTimeout(() => {
-      document.getElementById('loader').classList.add('fade');
-      document.getElementById('game').classList.add('show');
-      setTimeout(() => {
-        document.getElementById('loader').style.display = 'none';
-      }, 1000);
-    }, 400);
-
-    // Default selection
-    selectElement('sand');
-  }, 50);
+      document.getElementById('loader').style.display = 'none';
+    }, 1000);
+  }, 300);
 });
