@@ -689,42 +689,42 @@ const Input = (() => {
 })();
 
 // ══════════════════════════════════════════════════════════════════
-// GAME INIT — called after all scripts load
+// EXPOSE PW GLOBALLY — immediately so ui.js can access it
+// ══════════════════════════════════════════════════════════════════
+window.PW = {
+  Grid, Renderer, Simulation, Input, Helpers, ElementRegistry,
+  version: '2.0.0',
+};
+
+// ══════════════════════════════════════════════════════════════════
+// GAME INIT — called by ui.js after DOM is ready
 // ══════════════════════════════════════════════════════════════════
 function initGame() {
   const CELL_SIZE = parseInt(localStorage.getItem('pw_cellSize') || '3');
   const canvas = document.getElementById('gc');
   const wrap   = document.getElementById('canvasWrap');
 
-  // Size canvas to fill container
+  if (!canvas || !wrap) { console.error('Canvas not found'); return; }
+
   function resize() {
-    const w = wrap.clientWidth;
-    const h = wrap.clientHeight;
-    const cols = Math.floor(w / CELL_SIZE);
-    const rows = Math.floor(h / CELL_SIZE);
+    const w = wrap.clientWidth  || window.innerWidth;
+    const h = wrap.clientHeight || window.innerHeight;
+    const cols = Math.max(10, Math.floor(w / CELL_SIZE));
+    const rows = Math.max(10, Math.floor(h / CELL_SIZE));
     Grid.init(cols, rows);
     Renderer.init(canvas, cols, rows, CELL_SIZE);
-    // Size overlay canvases to match
     for (const id of ['hmc', 'bhc']) {
       const c = document.getElementById(id);
+      if (!c) continue;
       c.width  = canvas.width;
       c.height = canvas.height;
-      c.style.width  = canvas.style.width;
-      c.style.height = canvas.style.height;
     }
   }
 
   resize();
   window.addEventListener('resize', resize);
-
   Input.init(canvas, CELL_SIZE);
   Simulation.start();
-
-  // Expose globals for ui.js and other modules
-  window.PW = {
-    Grid, Renderer, Simulation, Input, Helpers, ElementRegistry,
-    version: '2.0.0',
-  };
 
   console.log(`Particle World v2.0 — ${ElementRegistry.count()} elements loaded`);
 }
