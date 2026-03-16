@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Particle World</title>
+<link rel="icon" href="favicon-32.png" sizes="32x32"/>
+<link rel="icon" href="favicon-64.png" sizes="64x64"/>
+<link rel="apple-touch-icon" href="favicon-256.png"/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ═══ LOADER / MENU ═══ -->
+<!-- ADMIN CODE GATE -->
+<!-- ADMIN GATE -->
+<div id="adminCode" class="hide">
+  <div class="acode-box">
+    <div style="font-size:1.8rem;margin-bottom:8px;">⚙</div>
+    <h2>Admin Panel</h2>
+    <p>Enter secret code</p>
+    <input type="password" id="adminInput" placeholder="••••••••••••" maxlength="20" autocomplete="off"/>
+    <div class="err" id="adminErr"></div>
+  </div>
+</div>
+
+<!-- ADMIN TOGGLE BTN -->
+<button id="adminToggleBtn" title="Admin Panel">⚙ ADMIN</button>
+
+<!-- ADMIN PANEL — floating draggable tabbed window -->
+<div id="adminPanel">
+  <div id="adminHdr">
+    <span id="adminDragHandle">⚙ ADMIN PANEL &nbsp;<span style="font-size:.45rem;color:#4a1a6a;letter-spacing:.15em;">PW_DEV</span></span>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button id="adminMinBtn" title="Minimize" style="background:none;border:1px solid #1a0a2a;color:#4a2a6a;font-size:.55rem;padding:1px 6px;cursor:pointer;border-radius:2px;">_</button>
+      <button id="adminClose" style="background:none;border:1px solid #2a0a1a;color:#6a2a3a;font-size:.65rem;padding:1px 6px;cursor:pointer;border-radius:2px;">✕</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div id="adminTabs">
+    <button class="atab active" data-tab="aTab0">🌍 World</button>
+    <button class="atab" data-tab="aTab1">👾 Events</button>
+    <button class="atab" data-tab="aTab2">🧪 Elements</button>
+    <button class="atab" data-tab="aTab3">👥 Players</button>
+    <button class="atab" data-tab="aTab4">🎨 Tools</button>
+    <button class="atab" data-tab="aTab5">📊 Stats</button>
+  </div>
+
+  <div id="adminBody">
+
+    <!-- ═══ TAB 0: WORLD ═══ -->
+    <div class="atab-panel active" id="aTab0">
+
+      <div class="asec" style="border-color:#ffd70033;background:#0a0800;">
+        <div class="asec-hdr" style="color:#ffd700;">📢 Announcement</div>
+        <input id="aAnnounceInput" class="ec-input" placeholder="Message to all players..." maxlength="120" style="width:100%;box-sizing:border-box;margin-bottom:6px;"/>
+        <div style="display:flex;gap:5px;">
+          <button class="abtn" id="aAnnounceSend" style="flex:1;background:#1a1200;border-color:#ffd70066;color:#ffd700;">📢 Send</button>
+          <button class="abtn" id="aAnnounceClear" style="flex:1;background:#120808;border-color:#ff444455;color:#ff6666;">✕ Clear</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">⚙ World Controls</div>
+        <div class="agrid">
+          <button class="abtn" id="aP">⏸ Pause</button>
+          <button class="abtn" id="aSt">⏭ Step</button>
+          <button class="abtn red" id="aCl">✕ Clear</button>
+          <button class="abtn" id="aRe">↺ Reset</button>
+        </div>
+        <div class="arow"><span class="alabel">Particle limit</span><span class="aval" id="aPlimV">∞</span></div>
+        <div class="arow"><input type="range" id="aPlim" min="100" max="50000" value="50000" step="100"/></div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">⏱ Time Control</div>
+        <div class="agrid">
+          <button class="abtn" id="aTimeNorm">▶ Normal</button>
+          <button class="abtn ora" id="aTimeSlowmo">🐢 Slow-Mo</button>
+          <button class="abtn red" id="aTimeFast">⚡ Hyper</button>
+          <button class="abtn" id="aTimePause">⏸ Pause</button>
+        </div>
+        <div class="arow"><span class="alabel">Speed</span><span class="aval" id="aTimeV">1x</span></div>
+        <div class="arow"><input type="range" id="aTimeSlider" min="1" max="40" value="4"/></div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🌡 Physics</div>
+        <div class="arow"><span class="alabel">Gravity</span><span class="aval" id="aGravV">1.0</span></div>
+        <div class="arow"><input type="range" id="aGrav" min="0" max="30" value="10" step="1"/></div>
+        <div class="arow"><span class="alabel">Heat spread</span><span class="aval" id="aHeatV">1.0x</span></div>
+        <div class="arow"><input type="range" id="aHeat" min="1" max="50" value="10"/></div>
+        <div class="arow"><span class="alabel">Liquid flow</span><span class="aval" id="aFlowV">1.0x</span></div>
+        <div class="arow"><input type="range" id="aFlow" min="1" max="30" value="10"/></div>
+        <div class="arow"><span class="alabel">Explosion power</span><span class="aval" id="aExplV">1.0x</span></div>
+        <div class="arow"><input type="range" id="aExpl" min="1" max="50" value="10"/></div>
+        <div class="arow"><span class="alabel">Sim speed</span><span class="aval" id="aSpdV2">2x</span></div>
+        <div class="arow"><input type="range" id="aSpd2" min="1" max="20" value="2"/></div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🌍 World Sculptor</div>
+        <div class="agrid">
+          <button class="abtn" id="aSculptIsland">🏝 Island</button>
+          <button class="abtn" id="aSculptCave">🕳 Cave</button>
+          <button class="abtn" id="aSculptVolcano">🌋 Volcano</button>
+          <button class="abtn" id="aSculptOcean">🌊 Ocean</button>
+          <button class="abtn" id="aSculptCity">🏙 City</button>
+          <button class="abtn" id="aSculptSpace">🌌 Space</button>
+          <button class="abtn" id="aSculptJungle">🌿 Jungle</button>
+          <button class="abtn red" id="aSculptArena">⚔ Arena</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🌀 World Tools</div>
+        <div class="agrid">
+          <button class="abtn" id="aFreezeAll">❄ Freeze All</button>
+          <button class="abtn" id="aUnfreeze">▶ Unfreeze</button>
+          <button class="abtn" id="aCloneWorld">📋 Clone Half</button>
+          <button class="abtn red" id="aDelArea">🗑 Clear Area</button>
+          <button class="abtn" id="aSpawnWorm">🌀 Wormholes</button>
+          <button class="abtn" id="aHeatAll">🌡 Heat All</button>
+          <button class="abtn" id="aCoolAll">❄ Cool All</button>
+          <button class="abtn ora" id="aRandElem">🎲 Random Spam</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">⚗ Reaction Lab</div>
+        <div class="agrid">
+          <button class="abtn" id="aRLabFreeze">❄ Freeze Liquids</button>
+          <button class="abtn" id="aRLabBoil">🔥 Boil Liquids</button>
+          <button class="abtn" id="aRLabRust">🟤 Rust Metal</button>
+          <button class="abtn" id="aRLabGold">✨ Gold All</button>
+          <button class="abtn ora" id="aRLabVoid">⬛ Voidify Sand</button>
+          <button class="abtn red" id="aRLabMelt">🌋 Melt All</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">📁 Save Tools</div>
+        <div class="agrid">
+          <button class="abtn grn" id="aForceSave">💾 Force Save</button>
+          <button class="abtn" id="aExport">📤 Export JSON</button>
+        </div>
+        <button class="abtn" id="aImportBtn">📥 Import JSON</button>
+        <input type="file" id="aImportFile" accept=".json" style="display:none"/>
+      </div>
+    </div>
+
+    <!-- ═══ TAB 1: EVENTS ═══ -->
+    <div class="atab-panel" id="aTab1">
+
+      <div class="asec">
+        <div class="asec-hdr">👾 Quick Events</div>
+        <div class="agrid">
+          <button class="abtn ora" id="aZWave">🧟 Zombie Wave</button>
+          <button class="abtn ora" id="aAlienInv">👾 Alien Invasion</button>
+          <button class="abtn ora" id="aTornado">🌪 Tornado</button>
+          <button class="abtn ora" id="aBHSpawn">🕳 Black Hole</button>
+          <button class="abtn red" id="aMeteors">☄ Meteors</button>
+          <button class="abtn red" id="aNukeAll">☢ NUKE ALL</button>
+          <button class="abtn red" id="aSuperExpl">💥 Super Explode</button>
+          <button class="abtn red" id="aArmageddon">☠ ARMAGEDDON</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🌪 Disaster Launcher</div>
+        <div class="agrid">
+          <button class="abtn red" id="dMeteorShower">☄ Meteor Shower</button>
+          <button class="abtn red" id="dAcidStorm">🧪 Acid Storm</button>
+          <button class="abtn ora" id="dZombieOutbreak">🧟 Zombie Outbreak</button>
+          <button class="abtn ora" id="dFireTornado">🌪🔥 Fire Tornado</button>
+          <button class="abtn ora" id="dBlizzard">❄ Blizzard Wave</button>
+          <button class="abtn red" id="dSolarFlare">☀ Solar Flare</button>
+          <button class="abtn red" id="dParasiteRain">🦠 Parasite Rain</button>
+          <button class="abtn red" id="dEMPBurst">⚡ EMP Burst</button>
+          <button class="abtn ora" id="dLavaFlood">🌋 Lava Flood</button>
+          <button class="abtn ora" id="dIceAge">❄ Ice Age</button>
+          <button class="abtn red" id="dPlague">🦠 Plague</button>
+          <button class="abtn red" id="dAsteroidField">☄ Asteroid Field</button>
+        </div>
+        <select class="aselect" id="aDisSel">
+          <option value="meteor_shower">☄ Meteor Shower</option>
+          <option value="earthquake">🌍 Earthquake</option>
+          <option value="volcano">🌋 Volcano</option>
+          <option value="radiation_storm">☢ Rad Storm</option>
+          <option value="blizzard">❄ Blizzard</option>
+          <option value="acid_rain">🧪 Acid Rain</option>
+          <option value="lightning_storm">⚡ Lightning Storm</option>
+          <option value="tsunami">🌊 Tsunami</option>
+        </select>
+        <button class="abtn ora" id="aDisTrig">▶ Trigger Selected</button>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🎮 God Mode</div>
+        <div class="agrid">
+          <button class="abtn grn" id="aGodBrushOn">⚡ God Brush ON</button>
+          <button class="abtn" id="aGodBrushOff">God Brush OFF</button>
+          <button class="abtn ora" id="aInfEnergy">⚡ Inf. Energy</button>
+        </div>
+        <div class="arow"><span class="alabel">God brush size</span><span class="aval" id="aGodSzV">15</span></div>
+        <div class="arow"><input type="range" id="aGodSz" min="5" max="60" value="15"/></div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🔑 Cheat Codes</div>
+        <div style="font-size:.54rem;color:#2a2a2a;line-height:2.1;">
+          <div><span style="color:#555;">godmode</span> — infinite energy all particles</div>
+          <div><span style="color:#555;">bigbang</span> — explode entire screen</div>
+          <div><span style="color:#555;">freeze</span> — freeze all particles</div>
+          <div><span style="color:#555;">rainbow</span> — random color every element</div>
+          <div><span style="color:#555;">gravity0</span> — zero gravity</div>
+          <div><span style="color:#555;">supernova</span> — spawn sun + explode</div>
+          <div><span style="color:#555;">omariscool</span> — open admin panel</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB 2: ELEMENTS ═══ -->
+    <div class="atab-panel" id="aTab2">
+
+      <div class="asec">
+        <div class="asec-hdr">🧪 Element Spawn</div>
+        <select class="aselect" id="aElemSel" style="width:100%;margin-bottom:6px;"></select>
+        <div class="agrid">
+          <button class="abtn grn" id="aSpawnElem">⚡ Fill</button>
+          <button class="abtn" id="aSpawn1">+ Spawn 1</button>
+        </div>
+        <div class="arow"><span class="alabel">Spawn X</span><input type="number" class="ainput" id="aSpawnX" value="50" style="width:55px"/></div>
+        <div class="arow"><span class="alabel">Spawn Y</span><input type="number" class="ainput" id="aSpawnY" value="50" style="width:55px"/></div>
+        <div class="arow"><span class="alabel">Radius</span><span class="aval" id="aSpawnRV">5</span></div>
+        <div class="arow"><input type="range" id="aSpawnR" min="1" max="30" value="5"/></div>
+        <button class="abtn" id="aTestReact" style="margin-top:4px;">🔬 Test Reaction</button>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🧬 Element Mutator</div>
+        <div style="display:flex;gap:5px;margin-bottom:6px;align-items:center;">
+          <select class="aselect" id="aMutFrom" style="flex:1;"></select>
+          <span style="color:#555;font-size:.7rem;">→</span>
+          <select class="aselect" id="aMutTo" style="flex:1;"></select>
+        </div>
+        <div class="arow"><span class="alabel">Radius (0=all)</span><input type="number" class="ainput" id="aMutRadius" value="0" style="width:50px"/></div>
+        <button class="abtn ora" id="aMutate">🧬 Mutate All</button>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">👥 Bulk Spawn</div>
+        <select class="aselect" id="aBulkSel" style="width:100%;margin-bottom:6px;">
+          <option value="person">👤 Person x50</option>
+          <option value="zombie">🧟 Zombie x50</option>
+          <option value="ant">🐜 Ant x100</option>
+          <option value="fish">🐟 Fish x50</option>
+          <option value="bird">🐦 Bird x50</option>
+          <option value="citizen">👤 Citizen x50</option>
+          <option value="bacteria">🦠 Bacteria x200</option>
+          <option value="parasite">🦠 Parasite x30</option>
+          <option value="rat">🐀 Rat x50</option>
+          <option value="snake">🐍 Snake x20</option>
+          <option value="wolf">🐺 Wolf x20</option>
+        </select>
+        <button class="abtn grn" id="aBulkSpawn">🌊 Spawn Wave</button>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🌟 Secret Elements</div>
+        <div class="agrid">
+          <button class="abtn grn" data-secret="timefreeze">⏸ TimeFreeze</button>
+          <button class="abtn grn" data-secret="neutronstar">★ Neutron★</button>
+          <button class="abtn grn" data-secret="antimatter">⚛ Antimatter</button>
+          <button class="abtn grn" data-secret="void_">◼ Void</button>
+          <button class="abtn grn" data-secret="dark_matter">🌑 Dark Matter</button>
+          <button class="abtn grn" data-secret="tachyon">⚡ Tachyon</button>
+          <button class="abtn grn" data-secret="time_crystal">💎 TimeCrystal</button>
+          <button class="abtn grn" data-secret="pulsar">★ Pulsar</button>
+          <button class="abtn grn" data-secret="singularity">◉ Singularity</button>
+          <button class="abtn grn" data-secret="god_particle">✦ GodParticle</button>
+          <button class="abtn grn" data-secret="nether">🔥 Nether</button>
+          <button class="abtn grn" data-secret="philosophers_stone">🔴 PhilStone</button>
+          <button class="abtn grn" data-secret="strange_matter">💜 StrangeMatter</button>
+          <button class="abtn grn" data-secret="exotic_matter">🌈 ExoticMatter</button>
+          <button class="abtn grn" data-secret="void_liquid">⬛ VoidLiquid</button>
+          <button class="abtn grn" data-secret="dark_energy">🌑 DarkEnergy</button>
+          <button class="abtn grn" data-secret="alien_beam">👽 AlienBeam</button>
+          <button class="abtn grn" data-secret="god_particle">✦ GodParticle</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🚫 Element Bans</div>
+        <div style="font-size:.55rem;color:#333;margin-bottom:4px;">Banned = normal users can't place</div>
+        <div id="aBanList" style="max-height:80px;overflow-y:auto;margin-bottom:5px;"></div>
+        <select class="aselect" id="aBanSel" style="width:100%;margin-bottom:5px;"></select>
+        <div class="agrid">
+          <button class="abtn red" id="aBanAdd">+ Ban</button>
+          <button class="abtn grn" id="aBanClear">✓ Unban All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB 3: PLAYERS ═══ -->
+    <div class="atab-panel" id="aTab3">
+
+      <div class="asec" style="border-color:#ff444433;background:#0a0505;">
+        <div class="asec-hdr" style="color:#ff6666;">🔨 Ban Player</div>
+        <input id="aBanUser" class="ec-input" placeholder="Username..." maxlength="24" style="width:100%;box-sizing:border-box;margin-bottom:5px;"/>
+        <input id="aBanReason" class="ec-input" placeholder="Reason..." maxlength="80" style="width:100%;box-sizing:border-box;margin-bottom:5px;"/>
+        <select id="aBanDuration" class="aselect" style="width:100%;margin-bottom:6px;">
+          <option value="3600000">1 Hour</option>
+          <option value="86400000">1 Day</option>
+          <option value="604800000">1 Week</option>
+          <option value="2592000000">30 Days</option>
+          <option value="-1">Permanent</option>
+        </select>
+        <div style="display:flex;gap:5px;">
+          <button class="abtn" id="aBanSend" style="flex:1;background:#1a0505;border-color:#ff444466;color:#ff6666;">🔨 Ban</button>
+          <button class="abtn" id="aBanUnbanAll" style="flex:1;background:#050a05;border-color:#44ff8866;color:#44ff88;">✓ Unban All</button>
+        </div>
+        <div id="aBanMsg" style="font-size:.58rem;min-height:1em;color:#ff6666;margin-top:4px;"></div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">👥 Creature Controls</div>
+        <div class="agrid">
+          <button class="abtn grn" id="aSpawnCit">+ Citizens</button>
+          <button class="abtn grn" id="aSpawnZom">+ Zombies</button>
+          <button class="abtn red" id="aKillAll">💀 Kill All</button>
+          <button class="abtn" id="aTogAI">🧠 Toggle AI</button>
+        </div>
+        <div class="arow"><span class="alabel">Creature speed</span><span class="aval" id="aCSpdV">1.0x</span></div>
+        <div class="arow"><input type="range" id="aCSpd" min="1" max="30" value="10"/></div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">📡 NPC Commander</div>
+        <div class="agrid">
+          <button class="abtn grn" id="aNPCFlee">🏃 All Flee</button>
+          <button class="abtn ora" id="aNPCAttack">⚔ All Attack</button>
+          <button class="abtn" id="aNPCFreeze">❄ Freeze NPCs</button>
+          <button class="abtn red" id="aNPCExplode">💥 NPCs Explode</button>
+          <button class="abtn grn" id="aNPCWave">🌊 NPC Wave</button>
+          <button class="abtn" id="aNPCInfect">🦠 Mass Infect</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">👁 Online Players</div>
+        <div id="aOnlinePlayers" style="font-size:.58rem;color:#444;line-height:2;min-height:30px;">Loading...</div>
+        <button class="abtn" id="aRefreshPlayers" style="margin-top:4px;">↺ Refresh</button>
+      </div>
+    </div>
+
+    <!-- ═══ TAB 4: TOOLS ═══ -->
+    <div class="atab-panel" id="aTab4">
+
+      <div class="asec">
+        <div class="asec-hdr">🎨 Color Tools</div>
+        <div class="agrid">
+          <button class="abtn" id="aColorRainbow">🌈 Rainbow All</button>
+          <button class="abtn" id="aColorInvert">🔄 Invert</button>
+          <button class="abtn" id="aColorReset">↺ Reset</button>
+          <button class="abtn ora" id="aColorNight">🌙 Night Mode</button>
+        </div>
+        <div class="arow"><span class="alabel">Hue shift</span><span class="aval" id="aHueV">0°</span></div>
+        <div class="arow"><input type="range" id="aHueShift" min="-180" max="180" value="0"/></div>
+        <button class="abtn" id="aHueApply">Apply Hue Shift</button>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">📸 Screenshot / GIF</div>
+        <div class="agrid">
+          <button class="abtn grn" id="aScreenshot">📸 Screenshot</button>
+          <button class="abtn" id="aGIFStart">🎬 Start GIF</button>
+        </div>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">🔬 Debug Tools</div>
+        <div class="agrid">
+          <button class="abtn" id="aTogHeat">🌡 Heatmap</button>
+          <button class="abtn" id="aTogGrid">⊞ Grid</button>
+        </div>
+        <button class="abtn" id="aCountElem" style="margin-top:4px;">📊 Count by type</button>
+        <div id="aElemCount" style="font-size:.54rem;color:#3a3a3a;margin-top:4px;max-height:90px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB 5: STATS ═══ -->
+    <div class="atab-panel" id="aTab5">
+
+      <div class="asec">
+        <div class="asec-hdr">📊 Live World Stats</div>
+        <div id="aDebugStats" style="font-size:.58rem;color:#444;line-height:1.9;margin-bottom:6px;"></div>
+        <div id="aLiveStats" style="font-family:'DM Mono',monospace;font-size:.55rem;color:#3a3a3a;line-height:2;max-height:200px;overflow-y:auto;"></div>
+        <button class="abtn" id="aRefreshStats">↺ Refresh</button>
+      </div>
+
+      <div class="asec">
+        <div class="asec-hdr">📈 Performance</div>
+        <div id="aPerfStats" style="font-size:.56rem;color:#3a3a3a;line-height:2;font-family:'DM Mono',monospace;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MOD PANEL ═══ -->
+<div class="opanel" id="panMod">
+<div class="opbox" style="max-width:680px;width:97vw;">
+
+  <!-- Header + tabs -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h2 style="margin:0;">📦 Mod Studio</h2>
+    <button onclick="document.getElementById('panMod').classList.remove('open')" style="background:none;border:1px solid #1a1a2a;color:#444;font-family:'DM Mono',monospace;font-size:.6rem;padding:4px 10px;cursor:pointer;">✕ close</button>
+  </div>
+
+  <div id="modTabs" style="display:flex;border:1px solid #111;border-radius:3px;overflow:hidden;margin-bottom:14px;">
+    <button class="mod-tab active" id="modTabLoaded" onclick="modSetTab('loaded')">📂 Loaded Mods</button>
+    <button class="mod-tab" id="modTabBuild" onclick="modSetTab('build')">🔧 Mod Builder</button>
+    <button class="mod-tab" id="modTabLibrary" onclick="modSetTab('library')">📚 Library</button>
+    <button class="mod-tab" id="modTabShare" onclick="modSetTab('share')">🔗 Share</button>
+  </div>
+
+  <!-- ══ TAB: LOADED MODS ══ -->
+  <div id="modPanLoaded">
+    <div class="mod-drop" id="modDrop" style="margin-bottom:10px;">
+      ⬆ Drop .pwmod / .json here, or click to browse
+      <input type="file" id="modFile" accept=".json,.pwmod" style="display:none" multiple/>
+    </div>
+    <div id="modList"></div>
+    <div style="font-size:.55rem;color:#222;margin-top:8px;">Tip: build your own mod in the 🔧 Mod Builder tab, or grab one from 📚 Library.</div>
+  </div>
+
+  <!-- ══ TAB: MOD BUILDER ══ -->
+  <div id="modPanBuild" style="display:none;">
+    <!-- Mod meta -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div><div class="ec-label">MOD NAME</div><input class="ec-input" id="mbName" placeholder="Super Mod" maxlength="40"/></div>
+      <div><div class="ec-label">VERSION</div><input class="ec-input" id="mbVer" placeholder="1.0" maxlength="10"/></div>
+      <div style="grid-column:1/-1"><div class="ec-label">DESCRIPTION</div><input class="ec-input" id="mbDesc" placeholder="What does this mod do?" maxlength="120"/></div>
+      <div><div class="ec-label">AUTHOR</div><input class="ec-input" id="mbAuthor" placeholder="you" maxlength="30"/></div>
+      <div><div class="ec-label">TAGS (comma sep)</div><input class="ec-input" id="mbTags" placeholder="fire, space, weird" maxlength="80"/></div>
+    </div>
+
+    <!-- Elements in mod -->
+    <div style="font-size:.55rem;color:#333;letter-spacing:.1em;margin-bottom:6px;">ELEMENTS IN THIS MOD <span id="mbElemCount" style="color:#ffe94a;">0</span></div>
+    <div id="mbElemList" style="min-height:40px;max-height:180px;overflow-y:auto;border:1px solid #0f0f18;border-radius:3px;padding:6px;margin-bottom:8px;background:#050508;"></div>
+
+    <!-- Add element form -->
+    <div style="border:1px solid #111;border-radius:3px;padding:10px;background:#080810;margin-bottom:8px;">
+      <div style="font-size:.55rem;color:#444;letter-spacing:.1em;margin-bottom:8px;">➕ ADD ELEMENT TO MOD</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px;">
+        <div><div class="ec-label">ID</div><input class="ec-input" id="mbElId" placeholder="my_element" maxlength="24"/></div>
+        <div><div class="ec-label">LABEL</div><input class="ec-input" id="mbElLabel" placeholder="My Element" maxlength="24"/></div>
+        <div><div class="ec-label">BEHAVIOR</div>
+          <select class="ec-input" id="mbElBehavior" style="padding:4px 6px;">
+            <option value="powder">Powder</option>
+            <option value="liquid">Liquid</option>
+            <option value="gas">Gas</option>
+            <option value="solid">Solid/Static</option>
+            <option value="creature">Creature</option>
+            <option value="fire">Fire-like</option>
+          </select>
+        </div>
+        <div><div class="ec-label">COLOR 1</div><input type="color" id="mbElCol1" value="#ff4488" style="width:100%;height:28px;border:1px solid #1a1a1a;background:#0a0a0a;cursor:pointer;"/></div>
+        <div><div class="ec-label">COLOR 2</div><input type="color" id="mbElCol2" value="#ff2266" style="width:100%;height:28px;border:1px solid #1a1a1a;background:#0a0a0a;cursor:pointer;"/></div>
+        <div><div class="ec-label">WEIGHT</div><input class="ec-input" id="mbElWeight" type="number" placeholder="1.0" min="0" max="5" step="0.1" value="1"/></div>
+        <div><div class="ec-label">HEAT OUTPUT</div><input class="ec-input" id="mbElHeat" type="number" placeholder="0" min="0" max="20" value="0"/></div>
+        <div><div class="ec-label">DECAY (0=none)</div><input class="ec-input" id="mbElDecay" type="number" placeholder="0" min="0" max="1" step="0.01" value="0"/></div>
+        <div><div class="ec-label">FLAMMABLE</div>
+          <select class="ec-input" id="mbElFlammable" style="padding:4px 6px;">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div><div class="ec-label">DESCRIPTION</div><input class="ec-input" id="mbElDesc" placeholder="What does it do?" maxlength="80"/></div>
+      <!-- Reactions editor -->
+      <div style="margin-top:8px;">
+        <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:5px;">REACTIONS</div>
+        <div id="mbReactionList" style="min-height:24px;margin-bottom:5px;"></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <select class="ec-input" id="mbRxWith" style="flex:1;padding:3px 5px;min-width:80px;">
+            <option value="">-- neighbor --</option>
+          </select>
+          <input class="ec-input" id="mbRxChance" type="number" placeholder="chance" min="0" max="1" step="0.01" value="0.1" style="width:70px;"/>
+          <select class="ec-input" id="mbRxResult" style="flex:1;padding:3px 5px;min-width:80px;">
+            <option value="">-- result --</option>
+          </select>
+          <button onclick="mbAddReaction()" style="padding:4px 10px;background:#0a1a0a;border:1px solid #1a3a1a;color:#4ac;font-family:'DM Mono',monospace;font-size:.55rem;cursor:pointer;">+ Add</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;text-align:right;">
+        <button onclick="mbAddElement()" style="padding:6px 14px;background:#0a1a0a;border:1px solid #22aa44;color:#44ff88;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;letter-spacing:.05em;">➕ Add to Mod</button>
+      </div>
+      <div id="mbElMsg" style="font-size:.58rem;color:#44ffaa;margin-top:4px;min-height:1em;"></div>
+    </div>
+
+    <!-- Mod JSON preview -->
+    <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:4px;">MOD JSON PREVIEW</div>
+    <textarea id="mbJsonPreview" readonly spellcheck="false" style="width:100%;height:120px;background:#050508;border:1px solid #0f0f18;color:#334;font-family:'DM Mono',monospace;font-size:.5rem;padding:8px;resize:vertical;border-radius:3px;outline:none;line-height:1.6;"></textarea>
+
+    <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;">
+      <button onclick="mbClear()" style="padding:6px 12px;background:#0a0a0a;border:1px solid #1a1a2a;color:#444;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;">🗑 Clear</button>
+      <button onclick="mbTestLoad()" style="padding:6px 12px;background:#0a1a2a;border:1px solid #1a4a6a;color:#4ac8ff;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;">▶ Test in Game</button>
+      <button onclick="mbExportFile()" style="padding:6px 12px;background:#0a0a1a;border:1px solid #222266;color:#88aaff;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;">💾 Export .pwmod</button>
+      <button onclick="modSetTab('share');mbPrepareShare()" style="padding:6px 12px;background:#1a0a0a;border:1px solid #442222;color:#ff8866;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;margin-left:auto;">🔗 Share Code →</button>
+    </div>
+    <div id="mbMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
+  </div>
+
+  <!-- ══ TAB: LIBRARY ══ -->
+  <div id="modPanLibrary" style="display:none;">
+    <div style="font-size:.58rem;color:#333;margin-bottom:10px;">Install community mods with one click. These are built into the game.</div>
+    <div id="modLibraryList"></div>
+  </div>
+
+  <!-- ══ TAB: SHARE ══ -->
+  <div id="modPanShare" style="display:none;">
+    <div style="font-size:.58rem;color:#333;margin-bottom:10px;line-height:1.8;">Share your mod as a code string — anyone can paste it to install instantly.</div>
+
+    <div style="font-size:.55rem;color:#444;letter-spacing:.1em;margin-bottom:5px;">EXPORT — copy this code to share your mod</div>
+    <textarea id="modShareExport" readonly style="width:100%;height:90px;background:#050508;border:1px solid #1a1a2a;color:#88aaff;font-family:'DM Mono',monospace;font-size:.5rem;padding:8px;resize:none;border-radius:3px;outline:none;line-height:1.5;" placeholder="Build a mod in the 🔧 Mod Builder first, then come here."></textarea>
+    <button onclick="modCopyShareCode()" style="margin-top:5px;padding:5px 14px;background:#0a1a0a;border:1px solid #22aa44;color:#44ff88;font-family:'DM Mono',monospace;font-size:.58rem;cursor:pointer;">📋 Copy Code</button>
+
+    <div style="margin:14px 0 5px;font-size:.55rem;color:#444;letter-spacing:.1em;">IMPORT — paste a share code here</div>
+    <textarea id="modShareImport" style="width:100%;height:70px;background:#050508;border:1px solid #1a1a2a;color:#ccc;font-family:'DM Mono',monospace;font-size:.5rem;padding:8px;resize:none;border-radius:3px;outline:none;line-height:1.5;" placeholder="Paste share code here..."></textarea>
+    <button onclick="modImportShareCode()" style="margin-top:5px;padding:5px 14px;background:#0a0a1a;border:1px solid #222266;color:#88aaff;font-family:'DM Mono',monospace;font-size:.58rem;cursor:pointer;">📥 Install from Code</button>
+    <div id="modShareMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
+  </div>
+
+</div></div>
+
+<div id="loader">
+  <canvas id="lcanvas"></canvas>
+  <div id="linner">
+    <canvas id="titleParticles" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.55;"></canvas>
+    <div id="load-progress" style="position:relative;z-index:1;">
+      <div id="lbar-wrap"><div id="lbar"></div></div>
+      <div id="ltxt">initializing particles...</div>
+    </div>
+    <div id="menu-content" style="display:none;position:relative;z-index:1;">
+      <div class="pw-logo">PARTICLE<span>WORLD</span></div>
+      <div class="pw-tagline">Sandbox Simulation &nbsp;·&nbsp; Version 1.0</div>
+      <div class="pw-tagline" style="font-size:.6rem;color:#333;margin-top:-.5rem;margin-bottom:2rem;letter-spacing:.12em">The biggest update. Expect beautiful chaos.</div>
+      <div class="beta-pill">✦ v1.2.3 — Beta</div>
+      <button class="menu-btn primary" id="mPlay">▶ &nbsp;PLAY</button>
+      <button class="menu-btn" id="mSandbox">🏖 &nbsp;SANDBOX</button>
+      <button class="menu-btn" id="mTutorial">📖 &nbsp;TUTORIAL</button>
+      <button class="menu-btn" id="mSettings">⚙ &nbsp;SETTINGS</button>
+      <button class="menu-btn" id="mCredits">✦ &nbsp;CREDITS</button>
+      <button class="menu-btn" id="mMods">📦 &nbsp;MODS</button>
+      <button class="menu-btn" id="mWorlds">🗺 &nbsp;PRESET WORLDS</button>
+      <button class="menu-btn" id="mLog">📋 &nbsp;UPDATE LOG</button>
+      <button class="menu-btn" id="mAccount">👤 &nbsp;ACCOUNT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TUTORIAL ═══ -->
+<div class="opanel" id="panTut">
+<div class="opbox">
+  <h2>📖 Tutorial</h2>
+  <h3>Controls</h3>
+  <ul>
+    <li>Left click — draw element &nbsp;|&nbsp; Right click — erase</li>
+    <li>Scroll wheel / Arrow keys — brush size</li>
+    <li>Space — pause &nbsp;|&nbsp; . (dot) — step one frame</li>
+    <li>+ / - — simulation speed &nbsp;|&nbsp; H — heat map</li>
+  </ul>
+  <h3>Physics</h3>
+  <ul>
+    <li>Weight affects fall speed — mercury crashes down, snow drifts slowly</li>
+    <li>Heat spreads through metal fast, wood slow, rubber barely at all</li>
+    <li>Ice melts → water → steam as temperature rises</li>
+    <li>Overheated batteries explode</li>
+  </ul>
+  <h3>Ocean World</h3>
+  <ul>
+    <li>Seawater + coral + kelp creates a living ecosystem</li>
+    <li>Sharks hunt fish and crabs &nbsp;|&nbsp; Whales drift and blow bubbles</li>
+    <li>Radiation harms coral and fish</li>
+  </ul>
+  <h3>Chemistry Lab</h3>
+  <ul>
+    <li>Draw beaker tiles to build containers, pour Chem-A/B/C inside</li>
+    <li>A+B → Fire &nbsp;|&nbsp; A+C → Acid &nbsp;|&nbsp; B+C → Steam</li>
+    <li>Add Catalyst to boost reactions &nbsp;|&nbsp; A+B+C together → NUKE</li>
+    <li>Check 📋 Recipes button for full list</li>
+  </ul>
+  <h3>City Builder</h3>
+  <ul>
+    <li>Place roads, houses, shops, offices to build a city</li>
+    <li>Citizens follow home → work → shop → sleep routine</li>
+    <li>Police chase zombies &nbsp;|&nbsp; Fire trucks respond to burning buildings</li>
+  </ul>
+  <h3>Zombie Mode 🧟</h3>
+  <ul><li>Press 🧟 button — zombie waves spawn from screen edges</li></ul>
+  <h3>Alien Invasion 👾</h3>
+  <ul><li>Press 👾 button — UFOs appear, beam down, abduct citizens</li></ul>
+  <h3>Logic Gates</h3>
+  <ul><li>Wire + Battery powers AND/OR/NOT/Timer chains</li></ul>
+  <h3>Portals & Wormholes</h3>
+  <ul>
+    <li>Portal A ↔ Portal B teleport particles between them</li>
+    <li>Wormhole ejects particles to a random screen edge</li>
+  </ul>
+  <button class="op-close" onclick="document.getElementById('panTut').classList.remove('open')">Close</button>
+</div></div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="opanel" id="panSet">
+<div class="opbox">
+  <h2>⚙ Settings</h2>
+  <div class="srow"><span class="slabel">Quality (cell size)</span>
+    <select id="setQ">
+      <option value="2">Tiny 2px — Ultra sharp</option>
+      <option value="3" selected>Medium 3px — Default</option>
+      <option value="4">Big 4px — Smooth</option>
+      <option value="6">Huge 6px — Potato 🥔</option>
+    </select>
+  </div>
+  <div class="srow"><span class="slabel">Default speed</span>
+    <input type="range" id="setSpd" min="1" max="5" value="2" style="width:90px"/>
+    <span id="setSpdV" style="font-size:.6rem;color:var(--acc);">2x</span>
+  </div>
+  <div class="srow"><span class="slabel">Glow effects</span>
+    <select id="setGlow"><option value="1">On</option><option value="0">Off</option></select>
+  </div>
+  <div class="srow"><span class="slabel">Screen shake</span>
+    <select id="setShake"><option value="1">On</option><option value="0">Off</option></select>
+  </div>
+  <div class="srow"><span class="slabel">⚡ Performance mode</span>
+    <select id="setPerfMode"><option value="0">Off — Full quality</option><option value="1">On — Max FPS</option></select>
+  </div>
+  <div class="srow"><span class="slabel">🖥 Layout</span>
+    <select id="setLayout">
+      <option value="classic">Classic — Sidebar</option>
+      <option value="pro">Pro — Bottom bar</option>
+    </select>
+  </div>
+  <h3>Theme</h3>
+  <div class="tgrid">
+    <button class="tt on" data-t="">Dark</button>
+    <button class="tt" data-t="t-light">Light</button>
+    <button class="tt" data-t="t-neon">Neon</button>
+    <button class="tt" data-t="t-warm">Warm</button>
+    <button class="tt" data-t="t-forest">Forest</button>
+    <button class="tt" data-t="t-mono">Mono</button>
+  </div>
+  <button class="op-close" id="closeSet">Apply & Close</button>
+</div></div>
+
+<!-- ═══ CREDITS ═══ -->
+<div class="opanel" id="panCred">
+<div class="opbox" style="max-width:540px;text-align:center;">
+
+  <!-- Title -->
+  <div style="margin-bottom:18px;">
+    <div style="font-family:'Syne',sans-serif;font-size:1.6rem;color:var(--acc);letter-spacing:.12em;margin-bottom:4px;">PARTICLE WORLD</div>
+    <div style="font-size:.55rem;color:#333;letter-spacing:.2em;">v1.2.3 BETA · A PHYSICS SANDBOX</div>
+  </div>
+
+  <!-- Main creator -->
+  <div style="background:#0a0a14;border:1px solid #2a1a4a;border-radius:6px;padding:18px 20px;margin-bottom:14px;">
+    <div style="font-size:.48rem;color:#555;letter-spacing:.2em;margin-bottom:8px;">CREATED BY</div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.4rem;color:#ffffff;letter-spacing:.08em;margin-bottom:4px;">omelette180</div>
+    <div style="font-size:.55rem;color:#a855f7;margin-bottom:10px;">game designer · developer · everything</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <div style="background:#0f0f1f;border:1px solid #1a1a2a;border-radius:3px;padding:4px 10px;font-size:.5rem;color:#444;">💡 All game concepts</div>
+      <div style="background:#0f0f1f;border:1px solid #1a1a2a;border-radius:3px;padding:4px 10px;font-size:.5rem;color:#444;">⚗ All 270+ elements</div>
+      <div style="background:#0f0f1f;border:1px solid #1a1a2a;border-radius:3px;padding:4px 10px;font-size:.5rem;color:#444;">🎨 Art direction</div>
+      <div style="background:#0f0f1f;border:1px solid #1a1a2a;border-radius:3px;padding:4px 10px;font-size:.5rem;color:#444;">🔧 Feature design</div>
+      <div style="background:#0f0f1f;border:1px solid #1a1a2a;border-radius:3px;padding:4px 10px;font-size:.5rem;color:#444;">🐛 Bug hunting</div>
+      <div style="background:#0f0f1f;border:1px solid #1a1a2a;border-radius:3px;padding:4px 10px;font-size:.5rem;color:#444;">📦 Mod Studio design</div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div style="font-size:.48rem;color:#1a1a2a;letter-spacing:.15em;margin:14px 0 10px;">── WHAT'S IN THIS GAME ──</div>
+
+  <!-- Stats grid -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+    <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;">270+</div>
+      <div style="font-size:.48rem;color:#333;margin-top:2px;">elements</div>
+    </div>
+    <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;">500+</div>
+      <div style="font-size:.48rem;color:#333;margin-top:2px;">reactions</div>
+    </div>
+    <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;">30+</div>
+      <div style="font-size:.48rem;color:#333;margin-top:2px;">achievements</div>
+    </div>
+    <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;">55+</div>
+      <div style="font-size:.48rem;color:#333;margin-top:2px;">scratch blocks</div>
+    </div>
+    <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;">6</div>
+      <div style="font-size:.48rem;color:#333;margin-top:2px;">built-in mods</div>
+    </div>
+    <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;">0</div>
+      <div style="font-size:.48rem;color:#333;margin-top:2px;">frameworks used</div>
+    </div>
+  </div>
+
+  <!-- Tech -->
+  <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 14px;margin-bottom:14px;text-align:left;">
+    <div style="font-size:.48rem;color:#333;letter-spacing:.15em;margin-bottom:7px;">BUILT WITH</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">Pure JavaScript</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">HTML5 Canvas</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">CSS3</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">Web Audio API</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">PeerJS (multiplayer)</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">DM Mono font</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">Syne font</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">No libraries</span>
+      <span style="font-size:.52rem;color:#888;background:#0a0a18;border:1px solid #111;padding:2px 8px;border-radius:10px;">No frameworks</span>
+    </div>
+  </div>
+
+  <!-- Inspiration -->
+  <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 14px;margin-bottom:14px;text-align:left;">
+    <div style="font-size:.48rem;color:#333;letter-spacing:.15em;margin-bottom:7px;">INSPIRED BY</div>
+    <div style="font-size:.55rem;color:#444;line-height:2;">
+      🧪 <span style="color:#666;">Sandboxels</span> — the godfather of browser sandboxes<br>
+      🎮 <span style="color:#666;">Powder Game</span> — the original falling sand classic<br>
+      💥 <span style="color:#666;">The Powder Toy</span> — for showing how deep this can go<br>
+      🌊 <span style="color:#666;">Noita</span> — proof that physics games are endlessly replayable
+    </div>
+  </div>
+
+  <!-- Special thanks -->
+  <div style="background:#080810;border:1px solid #0f0f18;border-radius:4px;padding:10px 14px;margin-bottom:16px;text-align:left;">
+    <div style="font-size:.48rem;color:#333;letter-spacing:.15em;margin-bottom:7px;">SPECIAL THANKS</div>
+    <div style="font-size:.55rem;color:#444;line-height:2;">
+      ⭐ <span style="color:#a855f7;">Otmane</span> — for the easter egg (you know what you did)<br>
+      🧠 <span style="color:#666;">Everyone who reported bugs</span> — you made this better<br>
+      🎲 <span style="color:#666;">Anyone who found the admin panel</span> — nice work<br>
+      🔥 <span style="color:#666;">You, playing right now</span> — thanks for blowing things up
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="font-size:.5rem;color:#1a1a2a;line-height:2;margin-bottom:12px;">
+    Single HTML file · Runs offline · No login · No ads · No tracking<br>
+    Made with ☕ and a concerning amount of time
+  </div>
+
+  <div class="beta-pill" style="margin-bottom:14px;">v1.2.3 BETA — Domain Lock + Favicon Update ✦</div>
+
+  <button class="op-close" onclick="document.getElementById('panCred').classList.remove('open')">Close</button>
+</div></div>
+
+<!-- ═══ GAME ═══ -->
+<!-- UPDATE LOG POPUP (shows on new version) -->
+<div id="updatePopup" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;">
+  <div style="background:#080808;border:1px solid #2a1a4a;border-radius:8px;padding:22px 26px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;color:#a855f7;margin-bottom:4px;">🔒 v1.2.3 — Beta Update!</div>
+    <div style="font-size:.6rem;color:#333;margin-bottom:14px;letter-spacing:.08em;">Domain protection, new favicon, visitor logging.</div>
+    <div style="font-size:.63rem;color:#555;line-height:2;margin-bottom:14px;">
+      🔒 Domain Lock — game only runs on the official URL<br>
+      📊 Visitor Logging — all visits logged to Firebase, stolen copies flagged<br>
+      🎨 New Favicon — pixel art P (fire/lava) and W (ice/water) with VFX<br>
+      🖼 3 favicon sizes — 256×256, 64×64, 32×32 for all contexts
+    </div>
+    <button onclick="dismissUpdatePopup()" style="padding:7px 22px;background:transparent;border:1px solid #a855f7;border-radius:3px;color:#a855f7;font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;width:100%;">Let's go ✦</button>
+  </div>
+</div>
+
+<!-- USER ACCOUNT PANEL -->
+<div class="opanel" id="panAccount">
+<div class="opbox" style="max-width:480px;">
+  <h2>👤 Account</h2>
+  <div id="acctLoggedOut">
+    <p style="font-size:.63rem;color:#444;margin-bottom:12px;">Create an account to save your worlds, achievements, score and settings across sessions.</p>
+    <div style="margin-bottom:8px;">
+      <div class="ec-row"><span class="ec-label">Username</span><input class="ec-input" id="acctUser" placeholder="your name" maxlength="24"/></div>
+      <div class="ec-row"><span class="ec-label">Password</span><input class="ec-input" id="acctPass" type="password" placeholder="password" maxlength="32"/></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;">
+      <button class="mb p" id="acctLogin">Sign In</button>
+      <button class="mb" id="acctRegister">Create Account</button>
+    </div>
+    <div id="acctMsg" style="font-size:.6rem;color:#ff4444;margin-top:6px;min-height:1em;"></div>
+  </div>
+  <div id="acctLoggedIn" style="display:none;">
+    <div style="font-size:.7rem;color:#ccc;margin-bottom:10px;">Signed in as <span id="acctName" style="color:#a855f7;font-family:'Syne',sans-serif;"></span></div>
+    <div style="font-size:.6rem;color:#333;line-height:2;margin-bottom:12px;">
+      Score: <span id="acctScore" style="color:#a855f7;">0</span> &nbsp;·&nbsp;
+      Achievements: <span id="acctAchCount" style="color:#a855f7;">0</span>/<span style="color:#555;">28</span> &nbsp;·&nbsp;
+      Saves: <span id="acctSaveCount" style="color:#a855f7;">0</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="mb p" id="acctSaveAll">💾 Save Everything</button>
+      <button class="mb" id="acctLoadAll">📂 Load Save</button>
+      <button class="mb" id="acctSignOut" style="margin-left:auto;">Sign Out</button>
+    </div>
+    <div id="acctSaveMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
+    <div id="acctSaveList" style="margin-top:10px;"></div>
+  </div>
+  <button class="op-close" onclick="document.getElementById('panAccount').classList.remove('open')" style="margin-top:12px;">Close</button>
+</div></div>
+
+<!-- ACHIEVEMENT POPUPS -->
+<div id="achPopup"></div>
+
+<!-- ELEMENT TOOLTIP -->
+<div id="elemTip">
+  <div class="tip-name" id="tipName"></div>
+  <div class="tip-desc" id="tipDesc"></div>
+  <div class="tip-tags" id="tipTags"></div>
+  <div class="tip-flavor" id="tipFlavor"></div>
+</div>
+
+<!-- UPDATE LOG -->
+<div class="opanel" id="panLog">
+<div class="opbox">
+  <h2>📋 Update Log</h2>
+
+  <div class="log-entry current">
+    <div class="log-ver">v1.2.3 — Beta Update 🔒</div>
+    <div class="log-date">Latest version</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔒 DOMAIN LOCK & PROTECTION</div>
+    <div class="log-item">Game is now domain-locked — only runs on the official URL. Any unauthorized copy shows a theft warning screen instead of the game</div>
+    <div class="log-item">Every visit is logged to Firebase with hostname, full URL, browser info and timestamp — stolen copies are flagged with <code>stolen: true</code> so the owner can see them in the Firebase console</div>
+    <div class="log-item">Redirect link on theft warning screen points back to the real game</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🎨 FAVICON</div>
+    <div class="log-item">Brand new favicon — pixel art P and W matching the in-game font style, traced directly from the game screenshot</div>
+    <div class="log-item">P is styled with fire and lava — yellow-white fire tip at top fading down through orange to deep red lava at the bottom, with fire particles rising above, lava drips below, and ember sparks orbiting</div>
+    <div class="log-item">W is styled with ice and water — icy white-blue at top fading to deep navy, with frost spikes, water droplets, and ice crystal sparkles</div>
+    <div class="log-item">Three sizes shipped: 256×256, 64×64, 32×32 — all linked in the page head for correct display in browser tabs, bookmarks, and home screens</div>
+
+    <div class="log-item change">Version: v1.2.1 → v1.2.3 Beta</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-ver">v1.2.1 — Beta Update ✨</div>
+    <div class="log-date">Previous version</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🖥 PRO LAYOUT</div>
+    <div class="log-item">New "Pro" layout mode — switch in Settings. Full-screen canvas with no sidebar, maximum drawing space</div>
+    <div class="log-item">Bottom element dock with scrollable category tabs — 18 categories including Basics, Fire, Nuclear, Liquids, Gases, Booms, Structures, Nature, Creatures, Weather, Space, Tech, Vehicles, City, Food, Special, Molten</div>
+    <div class="log-item">Element chips in the dock show a colour square and name — click to select, highlighted in purple when active</div>
+    <div class="log-item">Strip above dock has live search across all categories, brush size slider, speed slider, and particle/FPS counter</div>
+    <div class="log-item">Floating left toolbar in Pro mode — 7 icon buttons for Pause, Grid, Heat, Rain, Chaos, Clear, Menu — stays out of the way at mid-left of the canvas</div>
+    <div class="log-item">Classic sidebar layout unchanged — toggle between Classic and Pro any time in Settings, choice is saved across sessions</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">💬 GLOBAL CHAT</div>
+    <div class="log-item">Real-time global chat powered by Firebase — every player across all sessions sees the same messages</div>
+    <div class="log-item">Uses your account username when signed in, or shows as Guest otherwise</div>
+    <div class="log-item">Floating draggable chat box in the bottom-right corner — toggle with 💬 button in toolbar</div>
+    <div class="log-item">Colour-coded names — each username gets a consistent colour based on a hash of their name</div>
+    <div class="log-item">Last 50 messages load when you join. 800ms rate limit to prevent spam</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">💥 PERFORMANCE FIXES</div>
+    <div class="log-item fix">Fixed: explosions causing 1 FPS — all chain reactions (TNT, C4, gunpowder, hydrogen, nitroglycerin etc.) now deferred with setTimeout so they spread across frames instead of resolving synchronously in one frame</div>
+    <div class="log-item fix">Fixed: fire performance — removed the per-cell heat radius loop that ran 6000+ extra operations per frame with 500 fire cells. Heat spreading now handled entirely by the central diffuseHeat() pass</div>
+    <div class="log-item fix">Fixed: gas + fire was triggering a recursive explode() call per cell — now converts to fire instead</div>
+    <div class="log-item fix">Fixed: explosion particle cap — was spawning up to r×3.5 particles per blast with no global limit. Now capped at 60 total fire particles on screen at once, and r×2 max per blast</div>
+    <div class="log-item fix">Fixed: large explosions now skip cells proportionally when radius exceeds 1200 cells, keeping the visual correct while staying within frame budget</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">✨ QOL</div>
+    <div class="log-item">💬 Chat toggle button added to main toolbar</div>
+    <div class="log-item change">Version: v1.2 → v1.2.1 Beta</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-ver">v1.2 — Beta Bug Fix 🔧</div>
+    <div class="log-date">Previous version</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔥 FIRE — FULL SANDBOXELS REMAKE</div>
+    <div class="log-item">Fire now has temperature-driven color — cool fire is deep red, hot fire turns orange → yellow → white → blue-white at extreme heat</div>
+    <div class="log-item">Fire rises with turbulence — drifts left and right as it climbs instead of a straight column</div>
+    <div class="log-item">Heat radiation system — fire radiates heat outward 1–3 cells, igniting things before directly touching them. Larger fires reach further</div>
+    <div class="log-item">Embers — hot fire (above 300°) spawns glowing amber sparks that drift upward and can re-ignite nearby fuel</div>
+    <div class="log-item">Burnout improved — fire randomly leaves smoke or ash when it dies out</div>
+    <div class="log-item">Water extinguishing improved — water reduces fire energy, produces steam on contact, more realistic firefighting</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🌡 HEAT SYSTEM — 71 PHASE TRANSITIONS</div>
+    <div class="log-item">MELT table — every major element now has a temperature threshold and transforms when heat exceeds it</div>
+    <div class="log-item">Sand → lava at 700°, stone → lava at 800°, concrete → lava at 950°, brick → lava at 900°, basalt → lava at 1000°</div>
+    <div class="log-item">Metal → molten iron at 900°, steel → molten iron at 1100°, gold → molten gold at 600°, glass → molten glass at 800°</div>
+    <div class="log-item">Ice melts at 5°, snow at 2°, wax melts to oil at just 60°, cheese melts to oil at 80°</div>
+    <div class="log-item">Wood auto-ignites at 200°, coal at 300°, carpet at 150°, napalm at 120°, sugar at 100°</div>
+    <div class="log-item">Clay fires into ceramic at 500°, chalk becomes ash at 400°, bone chars to ash at 400°</div>
+    <div class="log-item">FREEZE table — water freezes below -10°, lava cools to obsidian below 200°, steam condenses back to water</div>
+    <div class="log-item">IGNITE table — 15 flammable elements now auto-ignite from ambient heat without needing direct fire contact</div>
+    <div class="log-item">Heat conductivity expanded — lead, gold, diamond, ceramic, obsidian, steel beams all have unique conductivity values</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🌋 NEW MOLTEN ELEMENTS</div>
+    <div class="log-item">Molten Iron — metal melted past 900°. Flows like lava, burns organics, cools back to solid metal</div>
+    <div class="log-item">Molten Gold — gold melted past 600°. Glows golden, flows slowly, re-solidifies to gold</div>
+    <div class="log-item">Molten Glass — glass melted past 800°. Blue-white glow, flows thick, cools back to glass</div>
+    <div class="log-item">Magma Pool — deep earth lava, hotter than surface lava. Cools to basalt</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🕯 NEW MATERIAL ELEMENTS</div>
+    <div class="log-item">Wax — melts to oil at 60°, turns yellow when warm, candle vibes</div>
+    <div class="log-item">Plastic — smokes when burned, slightly resistant to acid</div>
+    <div class="log-item">Charcoal — slowly heats its surroundings, water douses it to ash, can self-ignite when extremely hot</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚙ ADMIN PANEL — FULL REMAKE</div>
+    <div class="log-item">Floating draggable window — grab the header bar and move it anywhere on screen</div>
+    <div class="log-item">Minimize button — collapse to just the title bar when not in use</div>
+    <div class="log-item">6 tabs: World, Events, Elements, Players, Tools, Stats</div>
+    <div class="log-item">World tab: announcement sender, time control slider, physics sliders, world sculptor, save/export tools</div>
+    <div class="log-item">Events tab: quick events, disaster launcher with full dropdown, god mode buttons, cheat code list</div>
+    <div class="log-item">Players tab: ban system with durations, online players (live from Firebase), creature controls</div>
+    <div class="log-item">Tools tab: color tools (rainbow, invert, reset, night mode, hue shift), screenshot, debug toggles</div>
+    <div class="log-item">Stats tab: live particle count, canvas size, FPS, sim speed, performance display</div>
+    <div class="log-item">4 new disaster buttons: Lava Flood, Ice Age, Plague, Asteroid Field</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🌐 MULTIPLAYER — FULL REWRITE</div>
+    <div class="log-item">Cursors now render on a full-viewport overlay canvas — you see other players' colored dots and names anywhere on screen</div>
+    <div class="log-item">Drawing sync overhauled — draw events batched into 50ms windows then pushed to Firebase, remote draws applied instantly</div>
+    <div class="log-item">Cursor positions broadcast every 80ms using screen coordinates, not just canvas cell coords</div>
+    <div class="log-item">World snapshot saved to Firebase periodically by host; joining players load it on entry</div>
+    <div class="log-item">Clean disconnect — host removes whole room, guest removes own player entry only</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🐛 CRITICAL BUG FIXES</div>
+    <div class="log-item fix">Fixed: 166 broken neighbor reaction checks — N4 array was being iterated as raw offsets instead of actual cell coordinates, silently breaking fire spread, acid dissolving, virus infection, plant growth, and almost every element interaction</div>
+    <div class="log-item fix">Fixed: 5 N8 (8-directional) neighbor bugs — void, radiation, uranium, plutonium, shark AI all affected by same issue</div>
+    <div class="log-item fix">Fixed: gravity0 cheat code was referencing undefined variable gravMult instead of gravityMult</div>
+    <div class="log-item fix">Fixed: duplicate aArmageddon onclick handler (was registered twice, fired twice)</div>
+    <div class="log-item fix">Fixed: duplicate switch cases removed — 20 cases were defined twice, causing unpredictable element behavior</div>
+    <div class="log-item fix">Fixed: admin panel z-index conflicts — new layering system (9400/9500/9600) prevents overlap issues</div>
+    <div class="log-item fix">Fixed: scoreVal reference error on admin unlock — now correctly targets scoreDisp</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">✨ QOL IMPROVEMENTS</div>
+    <div class="log-item">Element search bar — type to filter the sidebar, Enter selects first result, Escape clears</div>
+    <div class="log-item">PW_dev owner account — auto-unlocks admin, gold name, all achievements on login</div>
+    <div class="log-item">Server announcements — admins can push scrolling gold ticker to all connected players via Firebase</div>
+    <div class="log-item">Ban system — ban by username with durations (1hr / 1day / 1week / 30days / permanent), stored in Firebase</div>
+    <div class="log-item">Quality presets — Tiny (2px), Medium (3px, default), Big (4px), Huge (6px 🥔)</div>
+    <div class="log-item change">Version: v1.1 → v1.2 Beta Bug Fix</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-ver">v1.1 — Beta Update 🧪</div>
+    <div class="log-date">Previous version</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🧩 ELEMENT CREATOR — FULL REMAKE</div>
+    <div class="log-item">4-tab system: Scratch, Pixel Art, JSON, Saved Elements</div>
+    <div class="log-item">Scratch mode expanded — 55+ blocks across 6 categories (was 23)</div>
+    <div class="log-item">New scratch blocks: Fall Fast, Run Fast, Bounce, Crawl, Orbit, Teleport, Extreme Heat, Freeze Around, 12 reaction types, 6 decay modes, 3 visual modes, 6 special effects</div>
+    <div class="log-item">Live preview canvas — 80×80 mini-simulation runs your element in real-time while you build</div>
+    <div class="log-item">Extra fields in Scratch: Behavior, Weight, Heat Output, Decay, Description, Flavor Text</div>
+    <div class="log-item">🎨 Pixel Art tab — 16×16 draw grid with brush/erase/fill tools, custom color palette, animated preview</div>
+    <div class="log-item">💾 Saved tab — all created elements auto-save to browser storage, load/reinstall/delete anytime</div>
+    <div class="log-item">Save Draft button — come back to WIP elements later</div>
+    <div class="log-item">JSON mode gets 2 new templates: Energy and Plant</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">📦 MOD STUDIO — FULL REMAKE</div>
+    <div class="log-item">4-tab system: Loaded Mods, Mod Builder, Library, Share</div>
+    <div class="log-item">Mod Builder — full mod editor with name/version/desc/author/tags fields</div>
+    <div class="log-item">Add multiple elements per mod, with per-element form: behavior, weight, heat, decay, flammable, description</div>
+    <div class="log-item">Built-in reaction editor per element — pick neighbor, result, and chance</div>
+    <div class="log-item">Live JSON preview updates as you build, with Test in Game and Export .pwmod buttons</div>
+    <div class="log-item">📚 Mod Library — 6 built-in community mods: Chaos Pack, Ocean Life, Alchemy Lab, Space Storm, Fantasy Biome, Industrial Pack</div>
+    <div class="log-item">🔗 Share tab — encode any mod as a base64 copy-paste share code; import others' mods instantly</div>
+    <div class="log-item">Loaded mods can now be exported or shared directly from the Loaded Mods tab</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚗ REACTIONS — MAJOR EXPANSION</div>
+    <div class="log-item">C4 now explodes (r=22) when touched by fire, lava, lightning, electricity, acid, or catalyst2</div>
+    <div class="log-item">Landmine detonates from fire, lava, lightning, and creatures stepping on it</div>
+    <div class="log-item">Napalm2 sticks to surfaces and keeps burning when lit by fire or lava</div>
+    <div class="log-item">Ethanol explodes (r=6) in fire or lava</div>
+    <div class="log-item">Hydrogen explodes (r=12) in fire, lava, lightning, and near oxygen</div>
+    <div class="log-item">Cryo Bomb freezes a large radius — extinguishes fire, turns lava to obsidian, sets heat to 0</div>
+    <div class="log-item">Acid Bomb splashes acid in a wide burst when lit by fire</div>
+    <div class="log-item">Sulfur explodes (r=5) in fire or lava</div>
+    <div class="log-item">Tar catches fire slowly, burns in lava</div>
+    <div class="log-item">Vine, Tree, Mushroom, Moss, Flower, Sugar, Carpet, Cheese, Bread, Meat all react with fire</div>
+    <div class="log-item">Rat, Snake, Frog, Wolf, Bear, Spider, Bat, Moth all burn in fire and melt in lava</div>
+    <div class="log-item">Spiderweb burns in fire, dissolves in acid, melts in lava</div>
+    <div class="log-item">Liquid Nitrogen freezes water and mud, turns lava into obsidian, cools all nearby heat</div>
+    <div class="log-item">Clay hardens into ceramic near heat (lava or high temperature)</div>
+    <div class="log-item">Basalt + lava → obsidian</div>
+    <div class="log-item">Soap + water → bubbles</div>
+    <div class="log-item">Bleach kills bacteria, mold, fungus, slime, virus; purifies water</div>
+    <div class="log-item">Yeast grows in water and sugar, releases CO2 bubbles</div>
+    <div class="log-item">Nitric acid dissolves metal, steel, iron, wire, circuit, stone, brick</div>
+    <div class="log-item">Chlorine gas kills creatures and purifies water</div>
+    <div class="log-item">Circuit activates fully from lightning hits</div>
+    <div class="log-item">Cloud lightning strikes now trigger all new explosives (C4, landmine, hydrogen)</div>
+    <div class="log-item">isFlam() expanded — 15 new flammable elements added</div>
+
+    <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🐛 FIXES — ELEMENTS NOW VISIBLE & WORKING</div>
+    <div class="log-item fix">Fixed: 20 elements had no switch case — stone, wall, brick, concrete, rubber, road, house, shop, office, fire station, police station, beaker, catalyst, catalyst2, eraser2, argon, mercury2, gamma burst, plasma cannon, railgun all now fully work</div>
+    <div class="log-item fix">Fixed: TNT, virus, alien beam, eraser2 had no color — now show correct colors</div>
+    <div class="log-item fix">Fixed: Acid no longer eats glass2, obsidian, diamond, ceramic (indestructible materials)</div>
+    <div class="log-item fix">Fixed: Catalyst and catalyst2 now have real behavior — catalyze reactions near them</div>
+    <div class="log-item fix">Fixed: Rubber has proper physics and won't catch fire easily</div>
+    <div class="log-item fix">Fixed: Mercury2 flows correctly and slowly poisons nearby creatures</div>
+    <div class="log-item fix">Fixed: Gamma burst moves and spreads radiation correctly</div>
+    <div class="log-item fix">Fixed: Railgun projectile flies upward and causes impact explosion</div>
+    <div class="log-item fix">Fixed: Element Creator ecSetTab missing closing brace (caused silent JS error)</div>
+    <div class="log-item change">Version: v1.0 → v1.1 Beta</div>
+  </div>
+
+  <div class="log-entry">
+    <div class="log-ver">v1.0 — Official Release 🎉</div>
+    <div class="log-date">Previous version</div>
+    <div class="log-item">Complete color overhaul — every element has richer, more varied palettes</div>
+    <div class="log-item">Animated explosions — shockwave rings, fire debris particles, flash overlay</div>
+    <div class="log-item">Fire improved — flicker animation, wall climbing, diagonal spread, floor creeping</div>
+    <div class="log-item">Water improved — wider flow (6 cells), higher viscosity, better pooling</div>
+    <div class="log-item">Gas improved — faster rise, wider drift, more likely to ignite</div>
+    <div class="log-item">Smoke improved — billowy drift, color variation</div>
+    <div class="log-item">Virus improved — 2x faster infection, diagonal spread wave</div>
+    <div class="log-item">Zombie improved — wider hunt range, diagonal infection, faster movement</div>
+    <div class="log-item">Title screen — restless particles drift behind the menu</div>
+    <div class="log-item fix">Fixed: 20 elements showing purple (missing color table entries)</div>
+    <div class="log-item change">Version: 0.9 → 1.0 — Official Release</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v0.9 — Polish Update</div>
+    <div class="log-date">Previous version</div>
+    <div class="log-item">Black hole massively strengthened — 2-step pull, near-certain gravity up close</div>
+    <div class="log-item">Loading screen: 3 animation modes (Classic, Birth, Swirl) — cycle with button</div>
+    <div class="log-item">Science-y loading messages — calibrating gravity, bending spacetime...</div>
+    <div class="log-item">Mobile: line interpolation for smooth drawing strokes</div>
+    <div class="log-item">Mobile: eraser quick button added to bottom bar</div>
+    <div class="log-item">Mobile: panel close button now at top, canvas no longer covered by bar</div>
+    <div class="log-item fix">Fixed: function wrapping bug causing 3x slowdown on explosions and step</div>
+    <div class="log-item fix">Fixed: duplicate step/explode/sC wrappers merged into single clean functions</div>
+    <div class="log-item fix">Fixed: black hole sound spam reduced with throttle</div>
+    <div class="log-item change">Version bump: 0.7 → 0.9</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v8.0 — Content Update</div>
+    <div class="log-date">Previous version</div>
+    <div class="log-item">Achievements system with 30+ unlockable achievements</div>
+    <div class="log-item">Score counter — earn points for chain reactions, explosions, survival</div>
+    <div class="log-item">Preset worlds — 8 pre-built scenes to load and destroy</div>
+    <div class="log-item">Element tooltips — hover any element to see what it does</div>
+    <div class="log-item">Custom element creator — build your own elements in-game</div>
+    <div class="log-item">Update log added to game</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v7.0 — Expansion Update</div>
+    <div class="log-date">Previous version</div>
+    <div class="log-item">Admin panel (code: omariscool) with full world control</div>
+    <div class="log-item">Mod support — load .json/.pwmod files to add new elements</div>
+    <div class="log-item">Mobile support — touch controls, pinch to zoom, mobile UI</div>
+    <div class="log-item">Sound system — Web Audio synthesized sounds + ambient loops</div>
+    <div class="log-item">Black hole overhaul — screen-wide gravity, spaghettification</div>
+    <div class="log-item">v0.7 Beta title screen with honest tagline</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v6.0 — Particle World</div>
+    <div class="log-date">Renamed from Sandworld</div>
+    <div class="log-item">Loading screen with black hole animation</div>
+    <div class="log-item">Main menu — Play, Sandbox, Tutorial, Settings, Credits</div>
+    <div class="log-item">Black hole VFX — accretion disk, lensing, hawking radiation</div>
+    <div class="log-item">Ocean world — seawater, coral, kelp, sharks, whales, crabs</div>
+    <div class="log-item">Chemistry lab — beakers, Chem A/B/C, catalyst, recipes</div>
+    <div class="log-item">City builder — roads, buildings, citizens, police, fire trucks</div>
+    <div class="log-item">Alien invasion mode — UFOs, beams, alien goo</div>
+    <div class="log-item">Zombie apocalypse mode — wave spawner</div>
+    <div class="log-item">Wormholes — teleport particles to random edge</div>
+    <div class="log-item change">Weight-based physics — heavier things fall faster</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v5.0 — Sandworld</div>
+    <div class="log-date">Original name era</div>
+    <div class="log-item">Heat system — temperature spreads, phase changes</div>
+    <div class="log-item">Disasters menu + Chaos button</div>
+    <div class="log-item">Conveyor belt, tank, helicopter</div>
+    <div class="log-item">Save/load system + heatmap overlay</div>
+    <div class="log-item">GIF export</div>
+    <div class="log-item">98 total elements</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v4.0</div>
+    <div class="log-date"></div>
+    <div class="log-item">Machines — wire, battery, pump, fan, turret, laser</div>
+    <div class="log-item">Vehicles — car, boat, plane</div>
+    <div class="log-item">Logic gates — AND, OR, NOT, Timer</div>
+    <div class="log-item">Portals A ↔ B</div>
+    <div class="log-item">Weather — cloud, rain, lightning, tornado</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v3.0</div>
+    <div class="log-date"></div>
+    <div class="log-item">Nuclear system — uranium, plutonium, radiation, nuke</div>
+    <div class="log-item">Virus, mutant, waste elements</div>
+    <div class="log-item">Gases — steam, smoke, methane, CO2</div>
+    <div class="log-item">Acid, poison, mercury, honey</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v2.0</div>
+    <div class="log-date"></div>
+    <div class="log-item">More elements, better liquid flow</div>
+    <div class="log-item">Creatures — person, zombie, ant, fish, bird</div>
+  </div>
+  <div class="log-entry">
+    <div class="log-ver">v1.0 — First Release</div>
+    <div class="log-date"></div>
+    <div class="log-item">Basic falling sand, water, fire, stone, dirt</div>
+    <div class="log-item">Simple physics</div>
+  </div>
+  <button class="op-close" onclick="document.getElementById('panLog').classList.remove('open')">Close</button>
+</div></div>
+
+<!-- PRESET WORLDS -->
+<div class="opanel" id="panWorlds">
+<div class="opbox">
+  <h2>🗺 Preset Worlds</h2>
+  <p style="font-size:.62rem;color:#3a3a3a;margin-bottom:12px;">Warning — loading a world clears your current one.</p>
+  <div class="world-grid">
+    <div class="world-card" data-world="city">
+      <div class="wi">🏙</div>
+      <div class="wn">The City</div>
+      <div class="wd">A bustling city full of citizens, buildings and roads. Ready to be destroyed.</div>
+    </div>
+    <div class="world-card" data-world="ocean">
+      <div class="wi">🌊</div>
+      <div class="wn">Ocean Ecosystem</div>
+      <div class="wd">Seawater, coral reefs, kelp forests, sharks, whales and crabs living peacefully.</div>
+    </div>
+    <div class="world-card" data-world="reactor">
+      <div class="wi">☢</div>
+      <div class="wn">Nuclear Reactor</div>
+      <div class="wd">A uranium reactor on the edge of meltdown. One wrong move...</div>
+    </div>
+    <div class="world-card" data-world="zombie">
+      <div class="wi">🧟</div>
+      <div class="wn">Zombie Apocalypse</div>
+      <div class="wd">The outbreak has begun. Citizens flee as zombies pour through the streets.</div>
+    </div>
+    <div class="world-card" data-world="volcano">
+      <div class="wi">🌋</div>
+      <div class="wn">Volcano Island</div>
+      <div class="wd">A volcano surrounded by ocean. It's about to erupt.</div>
+    </div>
+    <div class="world-card" data-world="lab">
+      <div class="wi">🧪</div>
+      <div class="wn">Chemistry Lab</div>
+      <div class="wd">Beakers full of Chem A, B and C separated by walls. Mix carefully.</div>
+    </div>
+    <div class="world-card" data-world="space">
+      <div class="wi">🌌</div>
+      <div class="wn">Space Void</div>
+      <div class="wd">A black hole, neutron star and antimatter floating in the void. Don't let them meet.</div>
+    </div>
+    <div class="world-card" data-world="sandbox">
+      <div class="wi">🏖</div>
+      <div class="wn">Empty Sandbox</div>
+      <div class="wd">A blank world with a flat ground of sand and stone. Start fresh.</div>
+    </div>
+  </div>
+  <button class="op-close" onclick="document.getElementById('panWorlds').classList.remove('open')">Close</button>
+</div></div>
+
+<!-- ELEMENT CREATOR -->
+<div class="opanel" id="panCreate">
+<div class="opbox" style="max-width:700px;width:97vw;">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h2 style="margin:0;">✏ Element Creator</h2>
+    <button onclick="document.getElementById('panCreate').classList.remove('open')" style="background:none;border:1px solid #1a1a2a;color:#444;font-family:'DM Mono',monospace;font-size:.6rem;padding:4px 10px;cursor:pointer;">✕ close</button>
+  </div>
+
+  <!-- Tab switcher -->
+  <div style="display:flex;border:1px solid #111;border-radius:3px;overflow:hidden;margin-bottom:14px;">
+    <button class="mod-tab active" id="ecTabScratch" onclick="ecSetTab('scratch')">🧩 SCRATCH</button>
+    <button class="mod-tab" id="ecTabPixel" onclick="ecSetTab('pixel')">🎨 PIXEL ART</button>
+    <button class="mod-tab" id="ecTabJson" onclick="ecSetTab('json')">{ } JSON</button>
+    <button class="mod-tab" id="ecTabSaved" onclick="ecSetTab('saved')">💾 SAVED</button>
+  </div>
+
+  <!-- ═══ SCRATCH MODE ═══ -->
+  <div id="ecScratchMode">
+    <!-- Basic info row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end;">
+      <div><div class="ec-label">NAME (ID)</div><input class="ec-input" id="scId" placeholder="my_element" maxlength="20"/></div>
+      <div><div class="ec-label">DISPLAY LABEL</div><input class="ec-input" id="scLabel" placeholder="My Element" maxlength="24"/></div>
+      <div style="display:flex;gap:5px;align-items:flex-end;">
+        <div><div class="ec-label">COL 1</div><input type="color" id="scCol1" value="#ff4488" style="width:32px;height:28px;border:1px solid #1a1a1a;background:#0a0a0a;cursor:pointer;border-radius:2px;"/></div>
+        <div><div class="ec-label">COL 2</div><input type="color" id="scCol2" value="#ff2266" style="width:32px;height:28px;border:1px solid #1a1a1a;background:#0a0a0a;cursor:pointer;border-radius:2px;"/></div>
+        <div id="scPreview" style="width:28px;height:28px;border:1px solid #1a1a1a;background:#ff4488;border-radius:2px;"></div>
+      </div>
+    </div>
+
+    <!-- Extra props row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="flex:1;min-width:100px;"><div class="ec-label">BEHAVIOR</div>
+        <select class="ec-input" id="scBehavior" style="padding:4px 6px;">
+          <option value="powder">Powder</option><option value="liquid">Liquid</option>
+          <option value="gas">Gas</option><option value="solid">Solid</option><option value="creature">Creature</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:80px;"><div class="ec-label">WEIGHT</div><input class="ec-input" id="scWeight" type="number" value="1" min="0" max="5" step="0.1"/></div>
+      <div style="flex:1;min-width:80px;"><div class="ec-label">HEAT OUT</div><input class="ec-input" id="scHeat" type="number" value="0" min="0" max="20"/></div>
+      <div style="flex:1;min-width:80px;"><div class="ec-label">DECAY</div><input class="ec-input" id="scDecay" type="number" value="0" min="0" max="1" step="0.01"/></div>
+      <div style="flex:1;min-width:160px;"><div class="ec-label">DESCRIPTION</div><input class="ec-input" id="scDesc" placeholder="What does it do?" maxlength="60"/></div>
+    </div>
+
+    <!-- Block palette -->
+    <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:5px;">BLOCK PALETTE — click to add</div>
+    <div id="scPalette" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;padding:8px;background:#050508;border:1px solid #0f0f0f;border-radius:3px;max-height:200px;overflow-y:auto;"></div>
+
+    <!-- Active blocks canvas -->
+    <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:5px;">YOUR ELEMENT LOGIC — drag to reorder · click ✕ to remove</div>
+    <div id="scCanvas" style="min-height:70px;padding:8px;background:#080810;border:2px dashed #1a1a2a;border-radius:3px;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;"></div>
+
+    <!-- Code preview -->
+    <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin:8px 0 4px;">GENERATED CODE</div>
+    <div id="scCodePreview" style="font-family:'DM Mono',monospace;font-size:.5rem;color:#333;background:#050508;border:1px solid #0f0f0f;padding:8px;border-radius:3px;min-height:32px;white-space:pre-wrap;max-height:80px;overflow-y:auto;"></div>
+
+    <!-- Live preview canvas -->
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;">
+      <div>
+        <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:4px;">LIVE PREVIEW</div>
+        <canvas id="scLiveCanvas" width="80" height="80" style="border:1px solid #1a1a2a;background:#080810;image-rendering:pixelated;"></canvas>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:4px;">NOTES / FLAVOR TEXT</div>
+        <textarea class="ec-input" id="scFlavor" placeholder="Flavor text..." maxlength="80" style="height:40px;resize:none;"></textarea>
+        <div style="font-size:.5rem;color:#222;margin-top:4px;">Elements are saved locally and survive page refresh.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
+      <button class="mb" onclick="document.getElementById('panCreate').classList.remove('open')">Cancel</button>
+      <button class="mb" onclick="scClearBlocks()">🗑 Clear</button>
+      <button class="mb" onclick="ecSaveDraft()" style="margin-left:auto;">💾 Save Draft</button>
+      <button class="mb p" id="scCreate">✏ Add Element</button>
+    </div>
+    <div id="scMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
+  </div>
+
+  <!-- ═══ PIXEL ART MODE ═══ -->
+  <div id="ecPixelMode" style="display:none;">
+    <div style="font-size:.58rem;color:#333;margin-bottom:10px;line-height:1.8;">Draw your element's look on the 16×16 grid. Colors cycle through your palette when the element spawns.</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+      <!-- Grid -->
+      <div>
+        <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:5px;">DRAW (16×16)</div>
+        <canvas id="pixelCanvas" width="192" height="192" style="border:1px solid #1a1a2a;cursor:crosshair;image-rendering:pixelated;display:block;"></canvas>
+        <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;">
+          <button onclick="pixelTool='draw'" id="pixToolDraw" style="padding:3px 8px;background:#0a1a0a;border:1px solid #22aa44;color:#44ff88;font-family:'DM Mono',monospace;font-size:.55rem;cursor:pointer;">✏ Draw</button>
+          <button onclick="pixelTool='erase'" id="pixToolErase" style="padding:3px 8px;background:#0a0a0a;border:1px solid #1a1a2a;color:#444;font-family:'DM Mono',monospace;font-size:.55rem;cursor:pointer;">⬜ Erase</button>
+          <button onclick="pixelFill()" style="padding:3px 8px;background:#0a0a1a;border:1px solid #1a1a3a;color:#88aaff;font-family:'DM Mono',monospace;font-size:.55rem;cursor:pointer;">🪣 Fill</button>
+          <button onclick="pixelClear()" style="padding:3px 8px;background:#1a0a0a;border:1px solid #3a1a1a;color:#ff6666;font-family:'DM Mono',monospace;font-size:.55rem;cursor:pointer;">🗑 Clear</button>
+        </div>
+      </div>
+      <!-- Palette + settings -->
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:5px;">BRUSH COLOR</div>
+        <input type="color" id="pixBrushColor" value="#ff4488" style="width:48px;height:36px;border:1px solid #1a1a1a;background:#0a0a0a;cursor:pointer;margin-bottom:8px;"/>
+        <div style="font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:5px;">COLOR PALETTE (used in-game)</div>
+        <div id="pixPaletteList" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;"></div>
+        <div style="display:flex;gap:5px;margin-bottom:10px;">
+          <button onclick="pixAddColor()" style="padding:3px 8px;background:#0a1a0a;border:1px solid #1a3a1a;color:#4af;font-family:'DM Mono',monospace;font-size:.52rem;cursor:pointer;">+ Add Color</button>
+          <button onclick="pixSampleFromGrid()" style="padding:3px 8px;background:#0a0a0a;border:1px solid #1a1a2a;color:#666;font-family:'DM Mono',monospace;font-size:.52rem;cursor:pointer;">⬆ From Grid</button>
+        </div>
+        <div><div class="ec-label">ELEMENT NAME (ID)</div><input class="ec-input" id="pixId" placeholder="my_pixel_elem" maxlength="20"/></div>
+        <div style="margin-top:6px;"><div class="ec-label">LABEL</div><input class="ec-input" id="pixLabel" placeholder="My Element" maxlength="24"/></div>
+        <div style="margin-top:6px;"><div class="ec-label">BEHAVIOR</div>
+          <select class="ec-input" id="pixBehavior" style="padding:4px 6px;">
+            <option value="powder">Powder</option><option value="liquid">Liquid</option>
+            <option value="gas">Gas</option><option value="solid">Solid</option><option value="creature">Creature</option>
+          </select>
+        </div>
+        <!-- Animated preview -->
+        <div style="margin-top:10px;font-size:.52rem;color:#333;letter-spacing:.1em;margin-bottom:4px;">ANIMATED PREVIEW</div>
+        <canvas id="pixPreviewCanvas" width="64" height="64" style="border:1px solid #1a1a2a;background:#080810;image-rendering:pixelated;"></canvas>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:12px;">
+      <button class="mb" onclick="document.getElementById('panCreate').classList.remove('open')">Cancel</button>
+      <button class="mb p" onclick="pixCreateElement()" style="margin-left:auto;">✏ Add Pixel Element</button>
+    </div>
+    <div id="pixMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
+  </div>
+
+  <!-- ═══ JSON MODE ═══ -->
+  <div id="ecJsonMode" style="display:none;">
+    <div style="font-size:.58rem;color:#333;margin-bottom:8px;line-height:1.8;">Full JSON control. Every field, every reaction.</div>
+    <textarea id="ecJsonInput" spellcheck="false" style="width:100%;height:240px;background:#050508;border:1px solid #1a1a2a;color:#88aaff;font-family:'DM Mono',monospace;font-size:.58rem;padding:10px;resize:vertical;border-radius:3px;outline:none;line-height:1.7;"></textarea>
+    <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;">
+      <button class="mb" onclick="ecJsonTemplate('powder')" style="font-size:.52rem;padding:3px 7px;">Powder</button>
+      <button class="mb" onclick="ecJsonTemplate('liquid')" style="font-size:.52rem;padding:3px 7px;">Liquid</button>
+      <button class="mb" onclick="ecJsonTemplate('gas')" style="font-size:.52rem;padding:3px 7px;">Gas</button>
+      <button class="mb" onclick="ecJsonTemplate('creature')" style="font-size:.52rem;padding:3px 7px;">Creature</button>
+      <button class="mb" onclick="ecJsonTemplate('explosive')" style="font-size:.52rem;padding:3px 7px;">Explosive</button>
+      <button class="mb" onclick="ecJsonTemplate('energy')" style="font-size:.52rem;padding:3px 7px;">Energy</button>
+      <button class="mb" onclick="ecJsonTemplate('plant')" style="font-size:.52rem;padding:3px 7px;">Plant</button>
+      <button class="mb" onclick="ecJsonFormat()" style="font-size:.52rem;padding:3px 7px;margin-left:auto;">✨ Format</button>
+    </div>
+    <div id="ecJsonErr" style="font-size:.58rem;color:#ff4444;margin-top:4px;min-height:1em;"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="mb" onclick="document.getElementById('panCreate').classList.remove('open')">Cancel</button>
+      <button class="mb" onclick="ecSaveDraft()" style="margin-left:auto;">💾 Save Draft</button>
+      <button class="mb p" id="ecJsonCreate">✏ Add from JSON</button>
+    </div>
+    <div id="ecJsonMsg" style="font-size:.6rem;color:#44ffaa;margin-top:6px;min-height:1em;"></div>
+  </div>
+
+  <!-- ═══ SAVED ELEMENTS ═══ -->
+  <div id="ecSavedMode" style="display:none;">
+    <div style="font-size:.58rem;color:#333;margin-bottom:8px;">Your saved custom elements — load back into the game or edit them.</div>
+    <div id="ecSavedList" style="max-height:340px;overflow-y:auto;"></div>
+    <div style="margin-top:8px;font-size:.52rem;color:#222;">Elements are stored in your browser. Export as JSON to keep them forever.</div>
+  </div>
+
+</div></div>
+
+<!-- ACHIEVEMENTS PANEL -->
+<div class="opanel" id="panAch">
+<div class="opbox">
+  <h2>🏆 Achievements</h2>
+  <div style="font-size:.6rem;color:#3a3a3a;margin-bottom:10px;">Score: <span id="achScoreTotal" style="color:var(--acc);font-family:'Syne',sans-serif;font-size:.78rem;">0</span></div>
+  <div id="achList"></div>
+  <button class="op-close" onclick="document.getElementById('panAch').classList.remove('open')">Close</button>
+</div></div>
+
+<!-- ══════════════════════════════════════
+     MULTIPLAYER PANEL
+══════════════════════════════════════ -->
+<div class="opanel" id="panMulti">
+<div class="opbox" style="max-width:420px;">
+  <h2>🌐 Multiplayer</h2>
+  <p style="font-size:.58rem;color:#333;margin-bottom:10px;line-height:1.8;">Real-time multiplayer via Firebase. Host creates a room, share the 4-letter code, friends join. Everyone draws on the same canvas live.</p>
+
+  <!-- Status bar -->
+  <div id="mpStatus" style="font-family:'DM Mono',monospace;font-size:.6rem;padding:8px 10px;background:#050508;border:1px solid #0f0f18;border-radius:3px;margin-bottom:12px;color:#333;min-height:28px;">
+    ● Not connected
+  </div>
+
+  <!-- Not connected view -->
+  <div id="mpSetup">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="mb p" id="mpHostBtn" style="flex:1;">🏠 Host a Room</button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input id="mpJoinCode" class="ec-input" placeholder="Room code..." maxlength="4" style="flex:1;text-transform:uppercase;letter-spacing:.2em;font-size:.85rem;text-align:center;"/>
+      <button class="mb" id="mpJoinBtn" style="flex:1;">🔗 Join Room</button>
+    </div>
+    <div id="mpJoinErr" style="font-size:.58rem;color:#ff4444;margin-top:4px;min-height:1em;"></div>
+  </div>
+
+  <!-- Connected view -->
+  <div id="mpConnected" style="display:none;">
+    <div style="font-size:.58rem;color:#555;margin-bottom:8px;line-height:2;">
+      Room: <span id="mpRoomDisplay" style="color:#4ac8ff;font-family:'DM Mono',monospace;letter-spacing:.2em;font-size:.85rem;"></span>
+      <button onclick="mpCopyCode()" style="background:none;border:1px solid #1a1a2a;color:#444;font-size:.52rem;padding:2px 6px;cursor:pointer;margin-left:6px;font-family:'DM Mono',monospace;">copy</button>
+    </div>
+    <div id="mpPlayerList" style="margin-bottom:10px;"></div>
+    <div style="font-size:.55rem;color:#222;line-height:2;">All players draw freely · Cursors visible to everyone</div>
+    <button class="mb" id="mpLeaveBtn" style="margin-top:10px;width:100%;">✕ Leave Room</button>
+  </div>
+
+  <button class="op-close" onclick="document.getElementById('panMulti').classList.remove('open')">Close</button>
+</div></div>
+
+<div id="game">
+  <div id="top">
+    <span class="logo-s">P<span>W</span></span>
+    <button class="tb" id="bMenu">☰</button>
+    <button class="tb" id="bMulti" style="color:#4ac8ff;border-color:#4ac8ff22;">🌐 MULTI</button>
+    <button class="tb" id="bPause">⏸</button>
+    <button class="tb" id="bStep" title="Step frame (when paused)">⏭</button>
+    <button class="tb" id="bGrid">GRID</button>
+    <button class="tb" id="bHeat">🌡 HEAT</button>
+    <button class="tb" id="bRain">🌧 RAIN</button>
+    <button class="tb pur" id="bChaos">🎲 CHAOS</button>
+    <button class="tb ora" id="bDisaster">☄ DISASTER</button>
+    <button class="tb" id="bZombie">🧟 ZOMBIE</button>
+    <button class="tb" id="bAlien">👾 ALIENS</button>
+    <button class="tb" id="bSave">💾 SAVES</button>
+    <button class="tb" id="bGIF">🎬 GIF</button>
+    <button class="tb red" id="bClear">✕ CLEAR</button>
+    <button class="tb" id="bMods">📦 MODS</button>
+    <button class="tb" id="bWorlds">🗺 WORLDS</button>
+    <button class="tb" id="bCreate">✏ CREATE</button>
+    <button class="tb" id="bLog">📋 LOG</button>
+    <button class="tb" id="bAch">🏆 ACH</button>
+    <button class="tb" id="bAcct">👤</button>
+    <button class="tb" id="bChat" style="color:#a855f7;border-color:#a855f722;" onclick="document.getElementById('chatPill')&&document.getElementById('chatPill').click()">💬</button>
+    <button id="otmaneStarBtn" title="✦ secret" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 6px;filter:drop-shadow(0 0 4px #ffe94a);animation:starSpin 4s linear infinite;flex-shrink:0;" onclick="openOtmanePicker()">⭐</button>
+    <div id="sts">
+      P:<span class="sv" id="sP">0</span>
+      FPS:<span class="sv" id="sF">60</span>
+      ☢:<span class="sv" id="sRad">0%</span>
+      🌡:<span class="sv" id="sTemp">0°</span>
+      <span class="sv" id="sSel">sand</span>
+    </div>
+  </div>
+  <div id="layout">
+    <div id="sb">
+      <input type="text" id="elemSearch" placeholder="🔍 search elements..." autocomplete="off" style="width:100%;box-sizing:border-box;background:#080808;border:1px solid #1a0a2a;border-radius:3px;color:#888;font-family:'DM Mono',monospace;font-size:.55rem;padding:5px 7px;margin-bottom:5px;outline:none;"/>
+      <div id="ss">
+        <div class="cat">basics</div>
+        <button class="eb sel" data-e="sand"><div class="dot" style="background:#c99638"></div>Sand<span class="kk">s</span></button>
+        <button class="eb" data-e="water"><div class="dot" style="background:#1a80c0"></div>Water<span class="kk">w</span></button>
+        <button class="eb" data-e="dirt"><div class="dot" style="background:#6a4220"></div>Dirt<span class="kk">d</span></button>
+        <button class="eb" data-e="stone"><div class="dot" style="background:#607080"></div>Stone</button>
+        <button class="eb" data-e="gravel"><div class="dot" style="background:#777"></div>Gravel</button>
+        <button class="eb" data-e="snow"><div class="dot" style="background:#cce8ff"></div>Snow</button>
+        <button class="eb" data-e="ice"><div class="dot" style="background:#5ab8e0"></div>Ice</button>
+        <button class="eb" data-e="mud"><div class="dot" style="background:#3a2010"></div>Mud</button>
+        <button class="eb" data-e="salt"><div class="dot" style="background:#dde"></div>Salt</button>
+        <div class="cat">fire & heat</div>
+        <button class="eb" data-e="fire"><div class="dot" style="background:#ff5010"></div>Fire<span class="kk">f</span></button>
+        <button class="eb" data-e="lava"><div class="dot" style="background:#ff4400"></div>Lava<span class="kk">l</span></button>
+        <button class="eb" data-e="wood"><div class="dot" style="background:#6a3e18"></div>Wood</button>
+        <button class="eb" data-e="coal"><div class="dot" style="background:#1e2530"></div>Coal</button>
+        <button class="eb" data-e="oil"><div class="dot" style="background:#1a1008"></div>Oil</button>
+        <button class="eb" data-e="gunpowder"><div class="dot" style="background:#786848"></div>Powder<span class="kk">g</span></button>
+        <button class="eb" data-e="tnt"><div class="dot" style="background:#cc1010"></div>TNT<span class="kk">t</span></button>
+        <button class="eb" data-e="torch"><div class="dot" style="background:#ff7700"></div>Torch</button>
+        <button class="eb" data-e="thermite"><div class="dot" style="background:#cc8822"></div>Thermite</button>
+        <div class="cat">☢ nuclear</div>
+        <button class="eb" data-e="uranium"><div class="dot" style="background:#44aa22;border:1px solid #8f4"></div>Uranium<span class="kk">u</span></button>
+        <button class="eb" data-e="plutonium"><div class="dot" style="background:#226622"></div>Plutonium</button>
+        <button class="eb" data-e="radiation"><div class="dot" style="background:#88ff00"></div>Radiation</button>
+        <button class="eb" data-e="nuke"><div class="dot" style="background:#ff2200;border:1px solid #f60"></div>☢ NUKE<span class="kk">n</span></button>
+        <button class="eb" data-e="mutant"><div class="dot" style="background:#88cc44"></div>Mutant</button>
+        <button class="eb" data-e="waste"><div class="dot" style="background:#334422"></div>Waste</button>
+        <div class="cat">liquids</div>
+        <button class="eb" data-e="acid"><div class="dot" style="background:#77ee00"></div>Acid<span class="kk">a</span></button>
+        <button class="eb" data-e="poison"><div class="dot" style="background:#8822aa"></div>Poison</button>
+        <button class="eb" data-e="mercury"><div class="dot" style="background:#99aabb"></div>Mercury</button>
+        <button class="eb" data-e="honey"><div class="dot" style="background:#ffaa00"></div>Honey</button>
+        <button class="eb" data-e="saltwater"><div class="dot" style="background:#1566aa"></div>Saltwater</button>
+        <button class="eb" data-e="blood"><div class="dot" style="background:#880010"></div>Blood</button>
+        <div class="cat">🌊 ocean</div>
+        <button class="eb" data-e="seawater"><div class="dot" style="background:#0a4a7a;border:1px solid #1a6a9a"></div>Seawater</button>
+        <button class="eb" data-e="coral"><div class="dot" style="background:#ff6644;border:1px solid #f96"></div>Coral🪸</button>
+        <button class="eb" data-e="kelp"><div class="dot" style="background:#228844;border:1px solid #4a6"></div>Kelp</button>
+        <button class="eb" data-e="shark"><div class="dot" style="background:#667788"></div>Shark🦈</button>
+        <button class="eb" data-e="whale"><div class="dot" style="background:#334455"></div>Whale🐋</button>
+        <button class="eb" data-e="crab"><div class="dot" style="background:#cc4422"></div>Crab🦀</button>
+        <button class="eb" data-e="bubble"><div class="dot" style="background:#aaccff55;border:1px solid #adf"></div>Bubble</button>
+        <div class="cat">🧪 chemistry</div>
+        <button class="eb" data-e="beaker"><div class="dot" style="background:#334455;border:1px solid #68a"></div>Beaker🧪</button>
+        <button class="eb" data-e="chem_a"><div class="dot" style="background:#ff4488"></div>Chem-A</button>
+        <button class="eb" data-e="chem_b"><div class="dot" style="background:#4488ff"></div>Chem-B</button>
+        <button class="eb" data-e="chem_c"><div class="dot" style="background:#44ff88"></div>Chem-C</button>
+        <button class="eb" data-e="catalyst"><div class="dot" style="background:#ffaa00"></div>Catalyst⚗</button>
+        <button class="eb" id="bRecipes">📋 Recipes</button>
+        <div class="cat">🏙 city</div>
+        <button class="eb" data-e="road"><div class="dot" style="background:#333;border:1px solid #555"></div>Road🛣</button>
+        <button class="eb" data-e="house"><div class="dot" style="background:#886644"></div>House🏠</button>
+        <button class="eb" data-e="shop"><div class="dot" style="background:#4466aa"></div>Shop🏪</button>
+        <button class="eb" data-e="office"><div class="dot" style="background:#445566"></div>Office🏢</button>
+        <button class="eb" data-e="police_st"><div class="dot" style="background:#224488"></div>Police🚔</button>
+        <button class="eb" data-e="fire_st"><div class="dot" style="background:#882222"></div>FireStn🚒</button>
+        <button class="eb" data-e="citizen"><div class="dot" style="background:#ffcc88"></div>Citizen👤</button>
+        <button class="eb" data-e="police"><div class="dot" style="background:#2244aa"></div>Police👮</button>
+        <button class="eb" data-e="firetruck"><div class="dot" style="background:#cc2222"></div>FireTruck🚒</button>
+        <div class="cat">⚡ machines</div>
+        <button class="eb" data-e="wire"><div class="dot" style="background:#cc9922;border:1px solid #fc4"></div>Wire</button>
+        <button class="eb" data-e="battery"><div class="dot" style="background:#224488;border:1px solid #48c"></div>Battery</button>
+        <button class="eb" data-e="pump"><div class="dot" style="background:#334488"></div>Pump</button>
+        <button class="eb" data-e="fan"><div class="dot" style="background:#446655"></div>Fan</button>
+        <button class="eb" data-e="turret"><div class="dot" style="background:#334422"></div>Turret🔫</button>
+        <button class="eb" data-e="laser"><div class="dot" style="background:#ff0044"></div>Laser</button>
+        <button class="eb" data-e="conveyor"><div class="dot" style="background:#445566"></div>Conveyor</button>
+        <div class="cat">🔀 logic</div>
+        <button class="eb" data-e="gate_and"><div class="dot" style="background:#226622;border:1px solid #4a4"></div>AND</button>
+        <button class="eb" data-e="gate_or"><div class="dot" style="background:#224488;border:1px solid #46c"></div>OR</button>
+        <button class="eb" data-e="gate_not"><div class="dot" style="background:#882222;border:1px solid #c44"></div>NOT</button>
+        <button class="eb" data-e="timer"><div class="dot" style="background:#445522;border:1px solid #8a4"></div>Timer</button>
+        <div class="cat">🌀 portals</div>
+        <button class="eb" data-e="portal_a"><div class="dot" style="background:#4400ff;border:1px solid #84f"></div>Portal A</button>
+        <button class="eb" data-e="portal_b"><div class="dot" style="background:#ff8800;border:1px solid #fa4"></div>Portal B</button>
+        <button class="eb" data-e="wormhole"><div class="dot" style="background:#220044;border:1px solid #608"></div>Wormhole🌀</button>
+        <button class="eb" data-e="gravity_zone"><div class="dot" style="background:#442266;border:1px solid #849"></div>GravZone</button>
+        <div class="cat">🚗 vehicles</div>
+        <button class="eb" data-e="car"><div class="dot" style="background:#cc4422"></div>Car🚗</button>
+        <button class="eb" data-e="boat"><div class="dot" style="background:#2255aa"></div>Boat⛵</button>
+        <button class="eb" data-e="plane"><div class="dot" style="background:#aabbcc"></div>Plane✈</button>
+        <button class="eb" data-e="tank"><div class="dot" style="background:#445522"></div>Tank🪖</button>
+        <button class="eb" data-e="helicopter"><div class="dot" style="background:#445566"></div>Heli🚁</button>
+        <div class="cat">👾 alien</div>
+        <button class="eb" data-e="ufo"><div class="dot" style="background:#224422;border:1px solid #4f8"></div>UFO👾</button>
+        <button class="eb" data-e="alien"><div class="dot" style="background:#2a4a2a;border:1px solid #4a6"></div>Alien👽</button>
+        <button class="eb" data-e="alien_goo"><div class="dot" style="background:#226633;border:1px solid #4a6"></div>AlienGoo</button>
+        <div class="cat">🌿 life</div>
+        <button class="eb" data-e="plant"><div class="dot" style="background:#1e9828"></div>Plant</button>
+        <button class="eb" data-e="seed"><div class="dot" style="background:#7aaa20"></div>Seed</button>
+        <button class="eb" data-e="fungus"><div class="dot" style="background:#aa4466"></div>Fungus</button>
+        <button class="eb" data-e="algae"><div class="dot" style="background:#00aa66"></div>Algae</button>
+        <button class="eb" data-e="nutrient"><div class="dot" style="background:#664422"></div>Nutrient</button>
+        <div class="cat">🦠 creatures</div>
+        <button class="eb" data-e="person"><div class="dot" style="background:#e8a050"></div>Person<span class="kk">p</span></button>
+        <button class="eb" data-e="zombie"><div class="dot" style="background:#557722"></div>Zombie<span class="kk">z</span></button>
+        <button class="eb" data-e="ant"><div class="dot" style="background:#882200"></div>Ant🐜</button>
+        <button class="eb" data-e="fish"><div class="dot" style="background:#2277ff"></div>Fish🐟</button>
+        <button class="eb" data-e="bird"><div class="dot" style="background:#ff9922"></div>Bird🐦</button>
+        <button class="eb" data-e="worm"><div class="dot" style="background:#bb5533"></div>Worm</button>
+        <button class="eb" data-e="virus"><div class="dot" style="background:#ff11aa"></div>Virus<span class="kk">v</span></button>
+        <div class="cat">🌩 weather</div>
+        <button class="eb" data-e="rain"><div class="dot" style="background:#3377bb"></div>Rain</button>
+        <button class="eb" data-e="cloud"><div class="dot" style="background:#aabbcc"></div>Cloud☁</button>
+        <button class="eb" data-e="lightning"><div class="dot" style="background:#ffee44"></div>Lightning⚡</button>
+        <button class="eb" data-e="tornado"><div class="dot" style="background:#8899aa"></div>Tornado🌪</button>
+        <div class="cat">✨ exotic</div>
+        <button class="eb" data-e="blackhole"><div class="dot" style="background:#000;border:1px solid #70a"></div>BlackHole<span class="kk">b</span></button>
+        <button class="eb" data-e="plasma"><div class="dot" style="background:#dd00ff"></div>Plasma</button>
+        <button class="eb" data-e="neutronstar"><div class="dot" style="background:#fff;border:1px solid #abf"></div>Neutron★</button>
+        <button class="eb" data-e="antimatter"><div class="dot" style="background:#cce;border:1px solid #fff"></div>Antimatter</button>
+        <button class="eb" data-e="void_"><div class="dot" style="background:#000;border:1px solid #303"></div>Void</button>
+        <button class="eb" data-e="clone"><div class="dot" style="background:#00ffcc"></div>Clone</button>
+        <button class="eb" data-e="meteor"><div class="dot" style="background:#cc8844"></div>Meteor☄</button>
+        <button class="eb" data-e="gravity_dust"><div class="dot" style="background:#aa66ff"></div>GravDust</button>
+        <div class="cat">🛠 tools</div>
+        <button class="eb" data-e="wall"><div class="dot" style="background:#1a1a20;border:1px solid #234"></div>Wall<span class="kk">x</span></button>
+        <button class="eb" data-e="glass"><div class="dot" style="background:#88bbdd44;border:1px solid #8cf"></div>Glass</button>
+        <button class="eb" data-e="metal"><div class="dot" style="background:#8899aa"></div>Metal</button>
+        <button class="eb" data-e="steel"><div class="dot" style="background:#aabbcc"></div>Steel</button>
+        <button class="eb" data-e="concrete"><div class="dot" style="background:#707070"></div>Concrete</button>
+        <button class="eb" data-e="brick"><div class="dot" style="background:#aa4422"></div>Brick</button>
+        <button class="eb" data-e="magnet"><div class="dot" style="background:#cc2244"></div>Magnet🧲</button>
+        <button class="eb" data-e="sponge"><div class="dot" style="background:#cc9922"></div>Sponge</button>
+        <button class="eb" data-e="crystal"><div class="dot" style="background:#9944ff"></div>Crystal</button>
+        <button class="eb" data-e="eraser"><div class="dot" style="background:#111;border:1px solid #333"></div>Eraser<span class="kk">e</span></button>
+        <div class="cat">🦠 biology</div>
+        <button class="eb" data-e="bacteria"><div class="dot" style="background:#44bb22"></div>Bacteria🦠</button>
+        <button class="eb" data-e="dna"><div class="dot" style="background:#4488ff"></div>DNA🧬</button>
+        <button class="eb" data-e="cell"><div class="dot" style="background:#88ccff"></div>Cell🔵</button>
+        <button class="eb" data-e="mold"><div class="dot" style="background:#557722"></div>Mold</button>
+        <button class="eb" data-e="spore"><div class="dot" style="background:#886644"></div>Spore</button>
+        <div class="cat">🌌 space</div>
+        <button class="eb" data-e="comet"><div class="dot" style="background:#88bbdd"></div>Comet☄</button>
+        <button class="eb" data-e="solar_wind"><div class="dot" style="background:#ffcc44"></div>SolarWind🌞</button>
+        <button class="eb" data-e="dark_matter"><div class="dot" style="background:#111122;border:1px solid #336"></div>DarkMatter</button>
+        <button class="eb" data-e="stardust"><div class="dot" style="background:#ffddaa"></div>Stardust✨</button>
+        <button class="eb" data-e="nebula"><div class="dot" style="background:#cc44ff"></div>Nebula🌈</button>
+        <div class="cat">⚗ chemistry+</div>
+        <button class="eb" data-e="nitroglycerin"><div class="dot" style="background:#ddff88"></div>Nitro💣</button>
+        <button class="eb" data-e="rust"><div class="dot" style="background:#aa4422"></div>Rust🟫</button>
+        <button class="eb" data-e="slime"><div class="dot" style="background:#44ff88"></div>Slime🟢</button>
+        <button class="eb" data-e="resin"><div class="dot" style="background:#cc8822"></div>Resin</button>
+        <button class="eb" data-e="ozone"><div class="dot" style="background:#88ffff"></div>Ozone</button>
+        <button class="eb" data-e="acid_rain"><div class="dot" style="background:#88ff44"></div>AcidRain🌧</button>
+        <div class="cat">🌋 earth</div>
+        <button class="eb" data-e="magma"><div class="dot" style="background:#ff4400"></div>Magma🌋</button>
+        <button class="eb" data-e="obsidian"><div class="dot" style="background:#111118;border:1px solid #336"></div>Obsidian</button>
+        <button class="eb" data-e="quartz"><div class="dot" style="background:#eeeeff;border:1px solid #aaf"></div>Quartz💎</button>
+        <button class="eb" data-e="ash2"><div class="dot" style="background:#666660"></div>Ash🌫</button>
+        <button class="eb" data-e="pumice"><div class="dot" style="background:#ccbbaa"></div>Pumice</button>
+        <div class="cat">⚡ special</div>
+        <button class="eb" data-e="electricity"><div class="dot" style="background:#eeeeff;border:1px solid #aaf"></div>Electric⚡</button>
+        <button class="eb" data-e="mirror"><div class="dot" style="background:#ccdde8;border:1px solid #8cf"></div>Mirror</button>
+        <button class="eb" data-e="glitter"><div class="dot" style="background:#ffcc00"></div>Glitter✨</button>
+        <button class="eb" data-e="napalm"><div class="dot" style="background:#ff6600"></div>Napalm🔥</button>
+        <div class="cat">☀ space+</div>
+        <button class="eb" data-e="sun"><div class="dot" style="background:#ffee44;border:1px solid #fff"></div>Sun☀</button>
+        <button class="eb" data-e="pulsar"><div class="dot" style="background:#8888ff"></div>Pulsar★</button>
+        <button class="eb" data-e="solar_flare"><div class="dot" style="background:#ff8800"></div>SolarFlare</button>
+        <button class="eb" data-e="black_dwarf"><div class="dot" style="background:#0a0a14;border:1px solid #224"></div>BlackDwarf</button>
+        <div class="cat">🦠 bio+</div>
+        <button class="eb" data-e="mutant_virus"><div class="dot" style="background:#ff44ff"></div>MutantVirus</button>
+        <button class="eb" data-e="parasite"><div class="dot" style="background:#664422"></div>Parasite🪱</button>
+        <button class="eb" data-e="ecosystem"><div class="dot" style="background:#228833"></div>Ecosystem🌿</button>
+        <div class="cat">💣 weapons</div>
+        <button class="eb" data-e="flamethrower"><div class="dot" style="background:#ff5500"></div>Flamethrower</button>
+        <button class="eb" data-e="emp"><div class="dot" style="background:#aaccff"></div>EMP⚡</button>
+        <button class="eb" data-e="shrapnel"><div class="dot" style="background:#888888"></div>Shrapnel</button>
+        <div class="cat">🌪 weather+</div>
+        <button class="eb" data-e="hurricane"><div class="dot" style="background:#778899"></div>Hurricane🌀</button>
+        <button class="eb" data-e="blizzard"><div class="dot" style="background:#ddeeff"></div>Blizzard❄</button>
+        <button class="eb" data-e="hailstorm"><div class="dot" style="background:#aaccee"></div>Hailstorm🌨</button>
+        <button class="eb" data-e="dust_devil"><div class="dot" style="background:#cc9966"></div>DustDevil</button>
+        <div class="cat">🌀 exotic+</div>
+        <button class="eb" data-e="time_crystal"><div class="dot" style="background:#ff88ff;border:1px solid #f0f"></div>TimeCrystal</button>
+        <button class="eb" data-e="tachyon"><div class="dot" style="background:#00ffff"></div>Tachyon</button>
+        <div class="cat">🌋 earth+</div>
+        <button class="eb" data-e="geyser"><div class="dot" style="background:#88ccff"></div>Geyser💧</button>
+        <button class="eb" data-e="stalactite"><div class="dot" style="background:#aaaaaa"></div>Stalactite</button>
+        <button class="eb" data-e="diamond"><div class="dot" style="background:#e0f8ff;border:1px solid #8cf"></div>Diamond💎</button>
+        <button class="eb" data-e="sulfur"><div class="dot" style="background:#eeee00"></div>Sulfur</button>
+        <div class="cat">🔥 fire+</div>
+        <button class="eb" data-e="ember"><div class="dot" style="background:#ff6600"></div>Ember</button>
+        <button class="eb" data-e="greek_fire"><div class="dot" style="background:#22ff88"></div>GreekFire</button>
+        <button class="eb" data-e="wildfire"><div class="dot" style="background:#ff3300"></div>Wildfire🔥</button>
+        <button class="eb" data-e="magma_rock"><div class="dot" style="background:#882200"></div>MagmaRock</button>
+        <button class="eb" data-e="charcoal"><div class="dot" style="background:#222220"></div>Charcoal</button>
+        <button class="eb" data-e="wax"><div class="dot" style="background:#fffde0;border:1px solid #ddd"></div>Wax🕯</button>
+        <button class="eb" data-e="plastic"><div class="dot" style="background:#e83030"></div>Plastic</button>
+        <div class="cat">🌋 molten</div>
+        <button class="eb" data-e="magma_pool"><div class="dot" style="background:#ff3300"></div>MagmaPool</button>
+        <button class="eb" data-e="molten_iron"><div class="dot" style="background:#ff7733"></div>MoltenIron🔩</button>
+        <button class="eb" data-e="molten_gold"><div class="dot" style="background:#ffcc00"></div>MoltenGold✨</button>
+        <button class="eb" data-e="molten_glass"><div class="dot" style="background:#88ccdd"></div>MoltenGlass</button>
+        <div class="cat">💧 liquids+</div>
+        <button class="eb" data-e="quicksand"><div class="dot" style="background:#ccaa77"></div>Quicksand</button>
+        <button class="eb" data-e="tar"><div class="dot" style="background:#111108"></div>Tar</button>
+        <button class="eb" data-e="brine"><div class="dot" style="background:#6699cc"></div>Brine</button>
+        <button class="eb" data-e="mud_water"><div class="dot" style="background:#554433"></div>MudWater</button>
+        <button class="eb" data-e="superfluid"><div class="dot" style="background:#00ffee;border:1px solid #0ff"></div>Superfluid✨</button>
+        <div class="cat">🪨 earth+</div>
+        <button class="eb" data-e="chalk"><div class="dot" style="background:#f0f0ee"></div>Chalk</button>
+        <button class="eb" data-e="basalt"><div class="dot" style="background:#2a2a2a"></div>Basalt</button>
+        <button class="eb" data-e="flint"><div class="dot" style="background:#888877"></div>Flint</button>
+        <button class="eb" data-e="clay"><div class="dot" style="background:#cc8866"></div>Clay</button>
+        <button class="eb" data-e="sandstone"><div class="dot" style="background:#ddbb88"></div>Sandstone</button>
+        <div class="cat">💨 gases+</div>
+        <button class="eb" data-e="hydrogen"><div class="dot" style="background:#eeffff"></div>Hydrogen</button>
+        <button class="eb" data-e="oxygen"><div class="dot" style="background:#aaddff"></div>Oxygen</button>
+        <button class="eb" data-e="chlorine"><div class="dot" style="background:#aaff44"></div>Chlorine</button>
+        <button class="eb" data-e="helium"><div class="dot" style="background:#ffeeaa"></div>Helium</button>
+        <button class="eb" data-e="nitrogen"><div class="dot" style="background:#88ccff"></div>Nitrogen</button>
+        <div class="cat">🌿 biology+</div>
+        <button class="eb" data-e="yeast"><div class="dot" style="background:#ddcc88"></div>Yeast</button>
+        <button class="eb" data-e="spiderweb"><div class="dot" style="background:#e0e0e0"></div>Spiderweb</button>
+        <button class="eb" data-e="bone"><div class="dot" style="background:#e8ddc8"></div>Bone</button>
+        <button class="eb" data-e="flesh"><div class="dot" style="background:#ffaaaa"></div>Flesh</button>
+        <button class="eb" data-e="egg"><div class="dot" style="background:#fff8ee"></div>Egg🥚</button>
+        <button class="eb" data-e="larva"><div class="dot" style="background:#ddee88"></div>Larva</button>
+        <button class="eb" data-e="firefly"><div class="dot" style="background:#aaff44;border:1px solid #ff0"></div>Firefly✨</button>
+        <button class="eb" data-e="jellyfish"><div class="dot" style="background:#ff88cc"></div>Jellyfish🪼</button>
+        <button class="eb" data-e="octopus"><div class="dot" style="background:#882244"></div>Octopus🐙</button>
+        <div class="cat">🐾 creatures+</div>
+        <button class="eb" data-e="rat"><div class="dot" style="background:#888877"></div>Rat🐀</button>
+        <button class="eb" data-e="snake"><div class="dot" style="background:#446633"></div>Snake🐍</button>
+        <button class="eb" data-e="spider"><div class="dot" style="background:#2a2a2a"></div>Spider🕷</button>
+        <button class="eb" data-e="bat"><div class="dot" style="background:#332244"></div>Bat🦇</button>
+        <button class="eb" data-e="frog"><div class="dot" style="background:#44aa22"></div>Frog🐸</button>
+        <button class="eb" data-e="wolf"><div class="dot" style="background:#887766"></div>Wolf🐺</button>
+        <button class="eb" data-e="bear"><div class="dot" style="background:#664422"></div>Bear🐻</button>
+        <button class="eb" data-e="moth"><div class="dot" style="background:#ccbbaa"></div>Moth🦋</button>
+        <div class="cat">🌿 plants+</div>
+        <button class="eb" data-e="cactus"><div class="dot" style="background:#226622"></div>Cactus🌵</button>
+        <button class="eb" data-e="mushroom"><div class="dot" style="background:#cc6644"></div>Mushroom🍄</button>
+        <button class="eb" data-e="vine"><div class="dot" style="background:#336622"></div>Vine</button>
+        <button class="eb" data-e="moss"><div class="dot" style="background:#447733"></div>Moss</button>
+        <button class="eb" data-e="flower"><div class="dot" style="background:#ff88aa"></div>Flower🌸</button>
+        <button class="eb" data-e="tree"><div class="dot" style="background:#3a5522"></div>Tree🌳</button>
+        <div class="cat">⚗ chemistry+</div>
+        <button class="eb" data-e="soap"><div class="dot" style="background:#eeeeff"></div>Soap</button>
+        <button class="eb" data-e="bleach"><div class="dot" style="background:#f8f8ff"></div>Bleach</button>
+        <button class="eb" data-e="ethanol"><div class="dot" style="background:#ddeedd"></div>Ethanol</button>
+        <button class="eb" data-e="nitric_acid"><div class="dot" style="background:#ddff66"></div>NitricAcid</button>
+        <button class="eb" data-e="liquid_nitrogen"><div class="dot" style="background:#cceeff"></div>LiqN2❄</button>
+        <button class="eb" data-e="polymer"><div class="dot" style="background:#cc8866"></div>Polymer</button>
+        <button class="eb" data-e="ceramic"><div class="dot" style="background:#e8d8c0"></div>Ceramic</button>
+        <div class="cat">🌦 weather+</div>
+        <button class="eb" data-e="fog"><div class="dot" style="background:#d8d8d8"></div>Fog</button>
+        <button class="eb" data-e="haze"><div class="dot" style="background:#e8e0d0"></div>Haze</button>
+        <button class="eb" data-e="aurora"><div class="dot" style="background:#00ff88;border:1px solid #0fa"></div>Aurora🌌</button>
+        <button class="eb" data-e="ball_lightning"><div class="dot" style="background:#ffffff;border:1px solid #88f"></div>BallLightning</button>
+        <button class="eb" data-e="waterspout"><div class="dot" style="background:#6699cc"></div>Waterspout</button>
+        <div class="cat">🔧 machines+</div>
+        <button class="eb" data-e="solar_panel"><div class="dot" style="background:#1a2a3a"></div>SolarPanel☀</button>
+        <button class="eb" data-e="wind_turbine"><div class="dot" style="background:#dddddd"></div>WindTurbine</button>
+        <button class="eb" data-e="nuclear_core"><div class="dot" style="background:#44ff22;border:1px solid #4f4"></div>NuclearCore</button>
+        <button class="eb" data-e="circuit"><div class="dot" style="background:#1a1a0a"></div>Circuit</button>
+        <button class="eb" data-e="drone"><div class="dot" style="background:#445566"></div>Drone🚁</button>
+        <button class="eb" data-e="rocket"><div class="dot" style="background:#cccccc"></div>Rocket🚀</button>
+        <button class="eb" data-e="mine"><div class="dot" style="background:#333322"></div>Mine💣</button>
+        <button class="eb" data-e="beacon"><div class="dot" style="background:#ffff00"></div>Beacon</button>
+        <button class="eb" data-e="drain"><div class="dot" style="background:#1a1a2a"></div>Drain</button>
+        <button class="eb" data-e="source"><div class="dot" style="background:#ffaa00"></div>Source</button>
+        <div class="cat">💣 weapons+</div>
+        <button class="eb" data-e="c4"><div class="dot" style="background:#f0f0e0"></div>C4💥</button>
+        <button class="eb" data-e="landmine"><div class="dot" style="background:#444422"></div>Landmine</button>
+        <button class="eb" data-e="acid_bomb"><div class="dot" style="background:#88ff00"></div>AcidBomb</button>
+        <button class="eb" data-e="napalm2"><div class="dot" style="background:#ff5500"></div>Napalm+</button>
+        <button class="eb" data-e="cryo_bomb"><div class="dot" style="background:#88ddff"></div>CryoBomb❄</button>
+        <div class="cat">🌌 space+</div>
+        <button class="eb" data-e="asteroid"><div class="dot" style="background:#9a8878"></div>Asteroid🌑</button>
+        <button class="eb" data-e="space_dust"><div class="dot" style="background:#887766"></div>SpaceDust</button>
+        <button class="eb" data-e="cosmic_ray"><div class="dot" style="background:#ffffff;border:1px solid #f8f"></div>CosmicRay</button>
+        <button class="eb" data-e="aurora"><div class="dot" style="background:#00ff88"></div>Aurora</button>
+        <button class="eb" data-e="magnetar"><div class="dot" style="background:#0044ff;border:1px solid #08f"></div>Magnetar</button>
+        <button class="eb" data-e="quasar"><div class="dot" style="background:#ffaa00;border:1px solid #ff0"></div>Quasar✨</button>
+        <div class="cat">🏗 building+</div>
+        <button class="eb" data-e="glass2"><div class="dot" style="background:#b8d0e8;border:1px solid #8cf"></div>Glass+</button>
+        <button class="eb" data-e="steel_beam"><div class="dot" style="background:#6a7a8a"></div>SteelBeam</button>
+        <button class="eb" data-e="carpet"><div class="dot" style="background:#8844aa"></div>Carpet</button>
+        <button class="eb" data-e="wood_plank"><div class="dot" style="background:#8a6030"></div>WoodPlank</button>
+        <div class="cat">⚡ exotic+</div>
+        <button class="eb" data-e="force_field"><div class="dot" style="background:#4488ff;border:1px solid #4ff"></div>ForceField</button>
+        <button class="eb" data-e="shield"><div class="dot" style="background:#88ccff"></div>Shield</button>
+        <button class="eb" data-e="gravity_well"><div class="dot" style="background:#330066"></div>GravityWell</button>
+        <button class="eb" data-e="phase_matter"><div class="dot" style="background:#ff00ff;border:1px solid #f0f"></div>PhaseMatter</button>
+        <button class="eb" data-e="prism"><div class="dot" style="background:#ffffff;border:1px solid #f84"></div>Prism🌈</button>
+        <button class="eb" data-e="aether"><div class="dot" style="background:#ccddff"></div>Aether</button>
+        <div class="cat">🍎 food+</div>
+        <button class="eb" data-e="cheese"><div class="dot" style="background:#ffdd44"></div>Cheese🧀</button>
+        <button class="eb" data-e="bread"><div class="dot" style="background:#cc9944"></div>Bread🍞</button>
+        <button class="eb" data-e="meat"><div class="dot" style="background:#cc4444"></div>Meat🥩</button>
+        <button class="eb" data-e="sugar_elem"><div class="dot" style="background:#ffffff;border:1px solid #ddd"></div>Sugar</button>
+      </div>
+      <div id="bpanel">
+        <div class="brow"><span class="bl">BRUSH</span><input type="range" id="bR" min="1" max="20" value="3"/><span class="bv" id="bV">3</span></div>
+        <div class="brow"><span class="bl">SPEED</span><input type="range" id="spR" min="1" max="5" value="2"/><span class="bv" id="spV">2x</span></div>
+      </div>
+    </div>
+    <div id="cw">
+      <canvas id="gc"></canvas>
+      <canvas id="bhc"></canvas>
+      <canvas id="hmc"></canvas>
+      <div id="chain"></div>
+      <div id="inspect"></div>
+      <div id="spdbadge">2x</div>
+      <div id="scoreDisp">⭐ 0</div>
+      <div id="zhud">🧟 WAVE <span id="zwaveN">1</span> — Zombies: <span id="zcount">0</span></div>
+      <div id="ahud">👾 ALIEN INVASION — UFOs active: <span id="ufocount">0</span></div>
+
+      <!-- PRO LAYOUT: floating left toolbar -->
+      <div id="proToolbar">
+        <button class="protb" id="ptPause" title="Pause">⏸</button>
+        <button class="protb" id="ptGrid" title="Grid">⊞</button>
+        <button class="protb" id="ptHeat" title="Heatmap">🌡</button>
+        <button class="protb" id="ptRain" title="Rain">🌧</button>
+        <div style="height:1px;background:#1a1a1a;margin:2px 0;"></div>
+        <button class="protb" id="ptChaos" title="Chaos" style="color:#7a3ab7;border-color:#1a0a2a;">🎲</button>
+        <button class="protb" id="ptClear" title="Clear" style="color:#442;border-color:#221;">✕</button>
+        <div style="height:1px;background:#1a1a1a;margin:2px 0;"></div>
+        <button class="protb" id="ptMenu" title="Menu">☰</button>
+      </div>
+    </div>
+  </div>
+  <div id="btm">
+    <span class="h"><b>LMB</b> draw</span>
+    <span class="h"><b>RMB</b> erase</span>
+    <span class="h"><b>SCROLL</b> brush</span>
+    <span class="h"><b>SPACE</b> pause</span>
+    <span class="h"><b>H</b> heatmap</span>
+    <span style="margin-left:auto;color:#161616">PARTICLE WORLD β · weight = fall speed · portals teleport · wormholes loop · beakers react · city NPCs have routines</span>
+  </div>
+
+  <!-- ══ PRO LAYOUT DOCK ══ -->
+  <div id="proDock">
+    <div id="proStrip">
+      <span class="psl">🔍</span>
+      <input type="text" id="proSearch" placeholder="search..." autocomplete="off"/>
+      <span class="psl">BRUSH</span>
+      <input type="range" id="proBrushR" min="1" max="20" value="3"/>
+      <span class="psv" id="proBrushV">3</span>
+      <span class="psl">SPEED</span>
+      <input type="range" id="proSpeedR" min="1" max="5" value="2"/>
+      <span class="psv" id="proSpeedV">2x</span>
+      <span style="margin-left:auto;font-size:.44rem;color:#1e1e1e;letter-spacing:.06em;">P:<span style="color:var(--acc)" id="proPCount">0</span> &nbsp; FPS:<span style="color:var(--acc)" id="proFps">60</span> &nbsp; <span id="proSelName" style="color:var(--acc)">sand</span></span>
+    </div>
+    <div id="proCats"></div>
+    <div id="proElems"></div>
+  </div>
+  <!-- MOBILE BAR -->
+  <div id="mob-bar"></div>
+  <div id="mob-elem-panel"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="mSave">
+<div class="mbox"><h2>💾 Save / Load</h2>
+  <input type="text" id="sName" placeholder="Save name..." value="world_1"/>
+  <div class="br" style="margin-bottom:7px;"><button class="mb p" id="doSave">Save World</button></div>
+  <div class="sl" id="sList"></div>
+  <div class="br"><button class="mb" id="cSave">Close</button></div>
+</div></div>
+
+<div class="modal" id="mDisaster">
+<div class="mbox"><h2>☄ Disasters</h2>
+  <div class="dgrid">
+    <button class="dbtn" data-d="meteor_shower">☄ Meteor Shower</button>
+    <button class="dbtn" data-d="earthquake">🌍 Earthquake</button>
+    <button class="dbtn" data-d="volcano">🌋 Volcano</button>
+    <button class="dbtn" data-d="radiation_storm">☢ Rad Storm</button>
+    <button class="dbtn" data-d="blackhole_event">🕳 Black Hole</button>
+    <button class="dbtn" data-d="blizzard">❄ Blizzard</button>
+    <button class="dbtn" data-d="acid_rain">🧪 Acid Rain</button>
+    <button class="dbtn" data-d="lightning_storm">⚡ Lightning Storm</button>
+    <button class="dbtn" data-d="tsunami">🌊 Tsunami</button>
+    <button class="dbtn" data-d="alien_attack">👾 Alien Attack</button>
+  </div>
+  <div class="br"><button class="mb" id="cDisaster">Close</button></div>
+</div></div>
+
+<div class="modal" id="mRecipes">
+<div class="mbox"><h2>📋 Chemistry Recipes</h2>
+  <div id="recipeList"></div>
+  <div class="br"><button class="mb" id="cRecipes">Close</button></div>
+</div></div>
+
+<div id="ro"></div>
+
+<!-- ═══ FIREBASE SDK (compat) ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+<!-- ═══ CORE ENGINE ═══ -->
+<script src="js/firebase-init.js"></script>
+<script src="js/loader.js"></script>
+<script src="js/core.js"></script>
+
+<!-- ═══ ELEMENTS ═══ -->
+<script src="elements/basics.js"></script>
+<script src="elements/fire.js"></script>
+<script src="elements/liquids.js"></script>
+<script src="elements/gases.js"></script>
+<script src="elements/explosives.js"></script>
+<script src="elements/solids.js"></script>
+<script src="elements/nature.js"></script>
+<script src="elements/creatures.js"></script>
+<script src="elements/weather.js"></script>
+<script src="elements/space.js"></script>
+<script src="elements/tech.js"></script>
+<script src="elements/vehicles.js"></script>
+<script src="elements/special.js"></script>
+<script src="elements/molten.js"></script>
+
+<!-- ═══ SYSTEMS ═══ -->
+<script src="js/physics.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/multiplayer.js"></script>
+<script src="js/account.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/mods.js"></script>
+
+</body>
+</html>
