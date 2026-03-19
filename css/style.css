@@ -393,3 +393,64 @@ body.layout-pro #proStrip {
 .ec-preview{width:22px;height:22px;border-radius:3px;border:1px solid #222;flex-shrink:0;}
 .ec-select{flex:1;padding:5px 7px;background:#040404;border:1px solid #1a1a1a;border-radius:3px;color:#888;font-family:'DM Mono',monospace;font-size:.63rem;outline:none;}
 .ec-select:focus{border-color:var(--acc);}
+
+/* ── SETTINGS PANEL (v1.3) ── */
+.set-tab {
+  flex:1;background:transparent;border:none;border-bottom:2px solid transparent;
+  color:#333;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.08em;
+  padding:8px 4px;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;
+}
+.set-tab:hover  { color:#666; }
+.set-tab.active { color:#a855f7;border-bottom-color:#a855f7; }
+
+.set-row {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:10px 0;border-bottom:1px solid #0d0d1a;
+}
+.set-row:last-child { border-bottom:none; }
+
+.set-lbl  { display:flex;align-items:center;gap:10px;flex:1;min-width:0; }
+.set-icon { font-size:.9rem;flex-shrink:0;width:22px;text-align:center; }
+.set-name { font-family:'DM Mono',monospace;font-size:.6rem;color:#888;letter-spacing:.04em; }
+.set-hint { font-size:.5rem;color:#2d2d2d;margin-top:1px;line-height:1.4; }
+
+.set-ctrl {
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.set-ctrl input[type="range"] {
+  width:110px;accent-color:#a855f7;cursor:pointer;
+}
+.set-val {
+  font-family:'DM Mono',monospace;font-size:.55rem;color:#a855f7;
+  min-width:32px;text-align:right;
+}
+
+/* Toggle switch */
+.set-toggle { position:relative;display:inline-block;width:36px;height:20px;cursor:pointer; }
+.set-toggle input { opacity:0;width:0;height:0; }
+.set-slider {
+  position:absolute;inset:0;background:#111122;border-radius:20px;transition:.2s;
+  border:1px solid #1a1a2a;
+}
+.set-slider::before {
+  content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;
+  background:#333;border-radius:50%;transition:.2s;
+}
+.set-toggle input:checked + .set-slider { background:#1a0a2a;border-color:#a855f7; }
+.set-toggle input:checked + .set-slider::before { transform:translateX(16px);background:#a855f7; }
+
+/* Theme buttons */
+.set-theme {
+  background:#080810;border:1px solid #111122;color:#444;
+  font-family:'DM Mono',monospace;font-size:.48rem;padding:4px 9px;
+  cursor:pointer;border-radius:3px;letter-spacing:.06em;transition:all .12s;
+}
+.set-theme:hover  { border-color:#333;color:#888; }
+.set-theme.active { border-color:#a855f7;color:#a855f7;background:#0d0518; }
+
+/* Role badge in multiplayer panel */
+#mpRoleBadge {
+  font-family:'Syne',sans-serif;font-size:.55rem;letter-spacing:.1em;
+  padding:2px 8px;border-radius:2px;border:1px solid #1a1a2a;
+  background:#050508;
+}
