@@ -1,374 +1,550 @@
 /**
- * PARTICLE WORLD v2.0 — js/multiplayer.js
- * Real-time Firebase multiplayer.
- * Extracted from v1.2.3 and fixed:
- *   - Uses compat Firebase SDK (no modular import issues)
- *   - mpHookDraw uses CELL from core.js
- *   - World serialize/deserialize works with new grid object format
- *   - Proper cleanup on disconnect
+ * PARTICLE WORLD v1.3 Beta — js/multiplayer.js
+ *
+ * HOST-AUTHORITY MULTIPLAYER
+ * ─────────────────────────────────────────────────────────────
+ * One world. One simulation. One brain running everything.
+ *
+ *  HOST  → runs PW.Simulation (the only simulation)
+ *           receives player draw actions from Firebase
+ *           applies them to THE ONE grid
+ *           broadcasts compressed world diffs every 100ms
+ *
+ *  CLIENT → simulation PAUSED (host drives the world)
+ *            sends draw actions to Firebase → host applies them
+ *            receives world diffs → applies to local display
+ *            everyone sees the same explosion, the same zombie
+ *
+ * No more parallel universes. No more "it blew up on my screen but not yours."
  */
 
-// ── BRIDGE: map old helpers → new PW grid API ────────────────────
-function _mpInB(x,y){ return window.PW?PW.Grid.inBounds(x,y):(x>=0&&y>=0&&x<(window.COLS||300)&&y<(window.ROWS||200)); }
-function _mpSC(x,y,t){ if(window.PW)PW.Grid.setCell(x,y,t); else if(window.sC)sC(x,y,t); }
-function _mpCC(x,y){ if(window.PW)PW.Grid.clearCell(x,y); else if(window.cC)cC(x,y); }
-function _mpMK(x,y){ if(window.PW)PW.Grid.markUpdated?.(x,y); else if(window.mk)mk(x,y); }
-function _mpSerializeWorld(){
-  if(window.PW){
-    const cells=[],g=PW.Grid;
-    for(let y=0;y<g.rows;y++) for(let x=0;x<g.cols;x++){
-      const c=g.getCell(x,y);
-      if(c&&c.type&&c.type!=='empty') cells.push([y*g.cols+x,c.type,c.color||'']);
-    }
-    return cells;
-  }
-  const cells=[];
-  for(let i=0;i<(window.ta||[]).length;i++) if(ta[i]) cells.push([i,ta[i],ca[i]]);
-  return cells;
-}
-function _mpDeserializeWorld(cells){
-  if(window.PW){
-    PW.Grid.clear();
-    const g=PW.Grid;
-    (cells||[]).forEach(([i,t])=>{const x=i%g.cols,y=Math.floor(i/g.cols);if(g.inBounds(x,y))g.setCell(x,y,t);});
-    return;
-  }
-  if(window.ta){ta.fill(0);ca.fill('#040404');_mpDeserializeWorld(cells||[]);}
-}
-function _mpCELL(){ return window.PW?PW.Grid._cellSize:(window.CELL||3); }
-function _mpSel(){ return window.PW?PW.Input.selected:(window.sel||'sand'); }
-function _mpBsz(){ return window.PW?PW.Input.brushSize:(window.bsz||3); }
+'use strict';
 
-// ── MULTIPLAYER GLOBALS ──────────────────────────────────────────
-let mpConnected=false,mpRoomCode='',mpMyId='',mpIsHost=false,mpMyColor='#4ac8ff';
-let mpPlayers={};
-let _mpRefs=[];
-let mpCursorCanvas=null,mpCursorCtx=null,mpCursorAnimId=null;
+// Uses firebase compat SDK already loaded in index.html
+// (firebase.initializeApp, firebase.database)
 
-const MP_COLORS=['#4ac8ff','#ff6644','#44ff88','#ffcc44','#ff44ff','#88ffcc','#ff88aa','#aaccff'];
-
-function mpUID(){return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function mpRand4(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:4},()=>c[Math.random()*c.length|0]).join('');}
-
-// ══════════════════════════════════════════
-//  PARTICLE WORLD — MULTIPLAYER (Firebase)
-// ══════════════════════════════════════════
-import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getDatabase,ref,set,get,onValue,onChildAdded,push,remove,onDisconnect,off,query,limitToLast,orderByChild}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-
-// ── Firebase config ──
-const FB_CFG={
-  apiKey:"AIzaSyBnVtCaMHdousMGFEfDGi57SVf5KrkTF4A",
-  authDomain:"particle-world.firebaseapp.com",
-  databaseURL:"https://particle-world-default-rtdb.firebaseio.com",
-  projectId:"particle-world",
-  storageBucket:"particle-world.firebasestorage.app",
-  messagingSenderId:"5494928895",
-  appId:"1:5494928895:web:adcedb5bedf79fa461a3ca",
+const _FB_CFG = {
+  apiKey:            'AIzaSyBnVtCaMHdousMGFEfDGi57SVf5KrkTF4A',
+  authDomain:        'particle-world.firebaseapp.com',
+  databaseURL:       'https://particle-world-default-rtdb.firebaseio.com',
+  projectId:         'particle-world',
+  storageBucket:     'particle-world.firebasestorage.app',
+  messagingSenderId: '5494928895',
+  appId:             '1:5494928895:web:adcedb5bedf79fa461a3ca',
 };
 
-let fbApp=null,fbDb=null,fbReady=false;
+let _db       = null;
+let _dbReady  = false;
 
-// ── DOMAIN LOCK + VISITOR LOG ──────────────────────────────────────
-(function(){
-  const _ok=['omelette180.github.io/Particle-World','localhost','127.0.0.1'];
-  const _h=location.hostname;
-  const _allowed=_ok.some(d=>(location.hostname+location.pathname).includes(d)||location.hostname===d);
-  // Log visit to Firebase regardless (so owner can see stolen hosts)
-  function _logVisit(db,r,s){
-    try{
-      const _vref=r(db,'visits/'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
-      s(_vref,{host:_h,href:location.href,ua:navigator.userAgent.slice(0,120),ts:Date.now(),stolen:!_allowed});
-    }catch(e){}
+function _dbInit() {
+  if (_dbReady) return true;
+  try {
+    if (!window.firebase) { console.warn('[MP] Firebase compat SDK not loaded'); return false; }
+    if (!firebase.apps.length) firebase.initializeApp(_FB_CFG);
+    _db = firebase.database();
+    window._fbDb = _db;
+    _dbReady = true;
+    // Log visit
+    _db.ref('visits/' + Date.now()).set({
+      host: location.hostname, href: location.href,
+      ua: navigator.userAgent.slice(0, 100), ts: Date.now(),
+      stolen: !window._pwAllowed,
+    }).catch(() => {});
+    return true;
+  } catch(e) {
+    console.error('[MP] Firebase init:', e);
+    return false;
   }
-  window._pwLogVisit=_logVisit;
-  window._pwAllowed=_allowed;
-  if(!_allowed){
-    // Nuke the canvas and show theft warning
-    document.addEventListener('DOMContentLoaded',()=>{
-      document.body.innerHTML=`<div style="position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:monospace;color:#ff4444;text-align:center;padding:2rem;">
-        <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
-        <div style="font-size:1.1rem;font-weight:bold;margin-bottom:.5rem;">Unauthorized Copy Detected</div>
-        <div style="font-size:.75rem;color:#666;margin-bottom:1.5rem;">This game is only licensed to run on its official domain.</div>
-        <a href="https://particle-world.netlify.app" style="color:#a855f7;font-size:.8rem;">Play the real Particle World →</a>
-      </div>`;
-    });
-  }
-})();
-
-function fbInit(){
-  if(fbReady)return;
-  try{fbApp=initializeApp(FB_CFG);fbDb=getDatabase(fbApp);window._fbDb=fbDb;fbReady=true;
-    window._fbReady=true;
-    window._fbImports={ref,set,get,onValue,onChildAdded,push,remove,query,limitToLast,orderByChild};
-    // Log visitor (stolen or legit)
-    if(window._pwLogVisit)window._pwLogVisit(fbDb,ref,set);
-  }
-  catch(e){console.warn('Firebase init failed:',e);mpSetStatus('✗ Firebase not configured — see console','#ff4444');}
 }
 
-const MP_COLORS=['#4ac8ff','#ff6eb4','#5dffa0','#ffe94a','#ff9f3f','#c77dff'];
-let mpRoomCode='',mpMyId='',mpMyColor='',mpIsHost=false;
-let mpConnected=false,mpPlayers={};
-let _mpRefs=[];
-let mpCursorCanvas=null,mpCursorCtx=null,mpCursorAnimId=null;
+// ── Config ────────────────────────────────────────────────────────
+const MP_COLORS       = ['#4ac8ff','#ff6644','#44ff88','#ffcc44','#ff44ff','#88ffcc','#ff88aa','#c77dff'];
+const DIFF_INTERVAL   = 100;   // ms between world diffs
+const CURSOR_INTERVAL = 80;    // ms between cursor broadcasts
+const ACTION_BATCH    = 40;    // ms client batches draw actions
+const MAX_DIFF        = 2000;  // max cells in one diff packet
 
-function mpRand4(){return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[0|Math.random()*32]).join('');}
-function mpUID(){return Math.random().toString(36).slice(2,10);}
+// ── State ─────────────────────────────────────────────────────────
+let _room      = '';
+let _myId      = '';
+let _myColor   = '';
+let _myName    = '';
+let _isHost    = false;
+let _connected = false;
+let _players   = {};
+let _unsubs    = [];  // cleanup functions
 
-// ── Cursor overlay — fixed position over entire viewport ──
-function mpInitCursors(){
-  if(mpCursorCanvas){mpCursorAnimId&&cancelAnimationFrame(mpCursorAnimId);mpCursorCanvas.remove();}
-  mpCursorCanvas=document.createElement('canvas');
-  mpCursorCanvas.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9000;';
-  mpCursorCanvas.width=window.innerWidth;
-  mpCursorCanvas.height=window.innerHeight;
-  document.body.appendChild(mpCursorCanvas);
-  mpCursorCtx=mpCursorCanvas.getContext('2d');
-  function loop(){
-    mpCursorAnimId=requestAnimationFrame(loop);
-    if(!mpCursorCtx)return;
-    mpCursorCtx.clearRect(0,0,mpCursorCanvas.width,mpCursorCanvas.height);
-    Object.values(mpPlayers).forEach(p=>{
-      if(p.id===mpMyId||p.cx==null)return;
-      // Draw cursor dot
-      mpCursorCtx.beginPath();mpCursorCtx.arc(p.cx,p.cy,6,0,Math.PI*2);
-      mpCursorCtx.fillStyle=p.color+'cc';mpCursorCtx.fill();
-      mpCursorCtx.strokeStyle='#000';mpCursorCtx.lineWidth=1.5;mpCursorCtx.stroke();
-      // Name tag
-      const name=p.name||p.id.slice(0,6);
-      mpCursorCtx.font='bold 11px DM Mono,monospace';
-      const tw=mpCursorCtx.measureText(name).width;
-      mpCursorCtx.fillStyle='rgba(0,0,0,.7)';
-      mpCursorCtx.fillRect(p.cx+10,p.cy-16,tw+8,16);
-      mpCursorCtx.fillStyle=p.color;
-      mpCursorCtx.fillText(name,p.cx+14,p.cy-4);
-    });
+// Host only
+let _prevSnap    = null;
+let _diffTimer   = null;
+
+// Client only
+let _pendingActs = [];
+let _actTimer    = null;
+
+// Cursors
+let _curCanvas = null;
+let _curCtx    = null;
+let _curRaf    = null;
+let _curTimer  = null;
+let _mx = 0, _my = 0;
+
+// Draw hook
+let _drawHooked  = false;
+let _lastDraw    = { x: -1, y: -1 };
+
+// ── Firebase helpers ──────────────────────────────────────────────
+const _r   = path => _db.ref(path);
+const _set = (path, val) => _r(path).set(val);
+const _get = path => _r(path).once('value');
+const _rm  = path => _r(path).remove();
+const _push = (path, val) => _r(path).push(val);
+
+function _on(path, evt, cb) {
+  const ref = _r(path);
+  ref.on(evt, cb);
+  _unsubs.push(() => ref.off(evt, cb));
+}
+function _offAll() { _unsubs.forEach(fn => fn()); _unsubs = []; }
+
+// ── Grid bridge ───────────────────────────────────────────────────
+function _cols()    { return window.PW?.Grid?.cols ?? 200; }
+function _rows()    { return window.PW?.Grid?.rows ?? 120; }
+function _inB(x,y)  { return window.PW?.Grid?.inBounds(x,y) ?? false; }
+function _gtype(x,y){ return window.PW?.Grid?.getType(x,y) ?? 'empty'; }
+function _gset(x,y,t){ window.PW?.Grid?.setCell(x,y,t); }
+function _gclear(x,y){ window.PW?.Grid?.clearCell(x,y); }
+function _cellSz()  {
+  const gc = document.getElementById('gc');
+  if (gc && window.PW?.Grid) return gc.width / PW.Grid.cols;
+  return parseInt(localStorage.getItem('pw_cellSize') || '3');
+}
+function _sel()  { return window.PW?.Input?.selected ?? 'sand'; }
+function _bsz()  { return window.PW?.Input?.brushSize ?? 3; }
+
+// ── Serialization ─────────────────────────────────────────────────
+function _serialize() {
+  const out = [], C = _cols(), R = _rows();
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
+    const t = _gtype(x, y);
+    if (t && t !== 'empty') out.push(y * C + x, t);
   }
-  loop();
-  window.addEventListener('resize',()=>{
-    if(!mpCursorCanvas)return;
-    mpCursorCanvas.width=window.innerWidth;mpCursorCanvas.height=window.innerHeight;
+  return out;
+}
+
+function _deserialize(data) {
+  if (!window.PW?.Grid) return;
+  PW.Grid.clear();
+  const d = data || [], C = _cols();
+  for (let i = 0; i < d.length - 1; i += 2) {
+    const x = d[i] % C, y = Math.floor(d[i] / C);
+    if (_inB(x, y)) _gset(x, y, d[i+1]);
+  }
+}
+
+// ── Diffing ───────────────────────────────────────────────────────
+function _snapshot() {
+  const C = _cols(), R = _rows(), snap = new Array(C * R);
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) snap[y*C+x] = _gtype(x,y);
+  return snap;
+}
+
+function _diff(old_, new_) {
+  const d = [];
+  for (let i = 0; i < old_.length && d.length < MAX_DIFF * 2; i++) {
+    if (old_[i] !== new_[i]) d.push(i, new_[i] === 'empty' ? '' : new_[i]);
+  }
+  return d;
+}
+
+function _applyDiff(d) {
+  if (!window.PW?.Grid) return;
+  const C = _cols();
+  for (let i = 0; i < d.length - 1; i += 2) {
+    const x = d[i] % C, y = Math.floor(d[i] / C);
+    if (!_inB(x, y)) continue;
+    if (!d[i+1]) _gclear(x, y); else _gset(x, y, d[i+1]);
+  }
+}
+
+// ── HOST: broadcast world diffs ───────────────────────────────────
+function _startDiffs() {
+  _prevSnap = _snapshot();
+  _diffTimer = setInterval(() => {
+    if (!_connected || !_isHost) return;
+    const newSnap = _snapshot();
+    const d = _diff(_prevSnap, newSnap);
+    _prevSnap = newSnap;
+    if (!d.length) return;
+    _push(`rooms/${_room}/diffs`, { d, t: Date.now() }).catch(() => {});
+    // Clean up old diffs occasionally
+    if (Math.random() < 0.05) _rm(`rooms/${_room}/diffs`);
+  }, DIFF_INTERVAL);
+}
+function _stopDiffs() {
+  if (_diffTimer) { clearInterval(_diffTimer); _diffTimer = null; }
+}
+
+// ── HOST: apply client actions ────────────────────────────────────
+function _watchActions() {
+  let skip = true;
+  setTimeout(() => skip = false, 1000);
+  _on(`rooms/${_room}/actions`, 'child_added', snap => {
+    if (skip) return;
+    const data = snap.val();
+    if (!data || data.by === _myId) { snap.ref.remove(); return; }
+    (data.acts || []).forEach(a => {
+      if (!_inB(a.x, a.y)) return;
+      if (a.e === 'eraser' || !a.e) _gclear(a.x, a.y);
+      else _gset(a.x, a.y, a.e);
+    });
+    snap.ref.remove();
   });
 }
 
-// Track our own cursor in screen coordinates
-function mpTrackMouse(e){
-  if(!mpPlayers[mpMyId])return;
-  mpPlayers[mpMyId].cx=e.clientX;
-  mpPlayers[mpMyId].cy=e.clientY;
-  // Also track canvas cell position for draw sync
-  const gc2=document.getElementById('gc');
-  const r=gc2.getBoundingClientRect();
-  mpPlayers[mpMyId].x=0|((e.clientX-r.left)*(gc2.width/r.width)/_mpCELL());
-  mpPlayers[mpMyId].y=0|((e.clientY-r.top)*(gc2.height/r.height)/_mpCELL());
-}
-
-// ── Host ──
-async function mpHost(){
-  fbInit();if(!fbReady){mpSetStatus('✗ Firebase not configured','#ff4444');return;}
-  mpRoomCode=mpRand4();mpMyId=mpUID();mpMyColor=MP_COLORS[0];mpIsHost=true;
-  mpSetStatus('Creating room...','#ffe94a');
-  const snap=await get(ref(fbDb,'rooms/'+mpRoomCode));
-  if(snap.exists())mpRoomCode=mpRand4();
-  const meRef=ref(fbDb,`rooms/${mpRoomCode}/players/${mpMyId}`);
-  await set(meRef,{id:mpMyId,color:mpMyColor,name:'Host',cx:null,cy:null});
-  onDisconnect(meRef).remove();
-  const hostRef=ref(fbDb,`rooms/${mpRoomCode}/host`);
-  await set(hostRef,mpMyId);
-  onDisconnect(hostRef).remove();
-  mpPlayers[mpMyId]={id:mpMyId,color:mpMyColor,name:'Host'};
-  mpConnected=true;
-  mpShowConnected();mpInitCursors();mpWatchRoom();mpHookDraw();mpStartCursorBroadcast();
-  mpSetStatus(`● Hosting — Room: ${mpRoomCode}`,'#5dffa0');
-  mpUpdatePlayerList();
-}
-
-// ── Join ──
-async function mpJoin(code){
-  fbInit();if(!fbReady){mpSetStatus('✗ Firebase not configured','#ff4444');return;}
-  code=code.trim().toUpperCase();
-  if(code.length!==4){document.getElementById('mpJoinErr').textContent='Enter a 4-letter code.';return;}
-  document.getElementById('mpJoinErr').textContent='';
-  mpSetStatus('Connecting to '+code+'...','#ffe94a');
-  const snap=await get(ref(fbDb,'rooms/'+code+'/host'));
-  if(!snap.exists()){document.getElementById('mpJoinErr').textContent='Room not found or host left.';mpSetStatus('✗ Room not found','#ff4444');return;}
-  mpRoomCode=code;mpMyId=mpUID();mpIsHost=false;
-  const pSnap=await get(ref(fbDb,'rooms/'+code+'/players'));
-  const usedColors=pSnap.exists()?Object.values(pSnap.val()).map(p=>p.color):[];
-  mpMyColor=MP_COLORS.find(c=>!usedColors.includes(c))||MP_COLORS[Object.keys(pSnap.val()||{}).length%MP_COLORS.length];
-  const idx=Object.keys(pSnap.val()||{}).length+1;
-  const meRef=ref(fbDb,`rooms/${mpRoomCode}/players/${mpMyId}`);
-  await set(meRef,{id:mpMyId,color:mpMyColor,name:'P'+idx,cx:null,cy:null});
-  onDisconnect(meRef).remove();
-  const wSnap=await get(ref(fbDb,'rooms/'+mpRoomCode+'/world'));
-  if(wSnap.exists())mpDeserializeWorld(wSnap.val());
-  mpPlayers[mpMyId]={id:mpMyId,color:mpMyColor,name:'P'+idx};
-  mpConnected=true;
-  mpShowConnected();mpInitCursors();mpWatchRoom();mpHookDraw();mpStartCursorBroadcast();
-  mpSetStatus(`● In room ${mpRoomCode}`,'#5dffa0');
-  mpUpdatePlayerList();
-}
-
-// ── Watch room ──
-function mpWatchRoom(){
-  const playersRef=ref(fbDb,'rooms/'+mpRoomCode+'/players');
-  onValue(playersRef,snap=>{
-    const data=snap.val()||{};
-    // Merge new player data — keep local cx/cy for our own cursor
-    Object.values(data).forEach(p=>{
-      if(!mpPlayers[p.id])mpPlayers[p.id]={};
-      // For other players update cx/cy from Firebase; for ourselves keep local
-      if(p.id!==mpMyId){Object.assign(mpPlayers[p.id],p);}
-      else{mpPlayers[p.id].id=p.id;mpPlayers[p.id].color=p.color;mpPlayers[p.id].name=p.name;}
-    });
-    Object.keys(mpPlayers).forEach(id=>{if(!data[id])delete mpPlayers[id];});
-    mpUpdatePlayerList();
-    const count=Object.keys(mpPlayers).length;
-    mpSetStatus(mpIsHost?`● Hosting — ${count} player${count!==1?'s':''}`:`● Room ${mpRoomCode} — ${count} player${count!==1?'s':''}`,'#5dffa0');
+// ── CLIENT: receive diffs ─────────────────────────────────────────
+function _watchDiffs() {
+  const since = Date.now() - 200;
+  const ref = _r(`rooms/${_room}/diffs`).orderByChild('t').startAt(since);
+  ref.on('child_added', snap => {
+    if (!_connected) return;
+    const data = snap.val();
+    if (data?.d) _applyDiff(data.d);
   });
-  _mpRefs.push(()=>off(playersRef));
+  _unsubs.push(() => ref.off('child_added'));
+}
 
-  // Draw events
-  const drawRef=ref(fbDb,'rooms/'+mpRoomCode+'/draws');
-  let _skipOld=true;setTimeout(()=>_skipOld=false,1500);
-  onChildAdded(drawRef,snap=>{
-    if(_skipOld)return;
-    const d=snap.val();if(!d||d.by===mpMyId)return;
-    d.events.forEach(ev=>{
-      if(!_mpInB(ev.x,ev.y))return;
-      if(ev.e==='eraser')_mpCC(ev.x,ev.y);else _mpSC(ev.x,ev.y,ev.e);_mpMK(ev.x,ev.y);
+// ── CLIENT: send draw actions ─────────────────────────────────────
+function _queueAct(x, y, e) {
+  _pendingActs.push({ x, y, e });
+  if (!_actTimer) {
+    _actTimer = setTimeout(() => {
+      _actTimer = null;
+      if (!_connected || !_pendingActs.length) return;
+      const acts = [..._pendingActs]; _pendingActs = [];
+      _push(`rooms/${_room}/actions`, { by: _myId, acts, t: Date.now() }).catch(() => {});
+    }, ACTION_BATCH);
+  }
+}
+
+// ── CURSOR OVERLAY ────────────────────────────────────────────────
+function _initCursors() {
+  if (_curCanvas) { cancelAnimationFrame(_curRaf); _curCanvas.remove(); }
+  _curCanvas = document.createElement('canvas');
+  _curCanvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000;';
+  _curCanvas.width  = innerWidth;
+  _curCanvas.height = innerHeight;
+  document.body.appendChild(_curCanvas);
+  _curCtx = _curCanvas.getContext('2d');
+
+  (function loop() {
+    _curRaf = requestAnimationFrame(loop);
+    _curCtx.clearRect(0, 0, _curCanvas.width, _curCanvas.height);
+    Object.values(_players).forEach(p => {
+      if (p.id === _myId || p.cx == null) return;
+      _curCtx.beginPath();
+      _curCtx.arc(p.cx, p.cy, 7, 0, Math.PI * 2);
+      _curCtx.fillStyle   = p.color + 'cc';
+      _curCtx.fill();
+      _curCtx.strokeStyle = '#000';
+      _curCtx.lineWidth   = 1.5;
+      _curCtx.stroke();
+      const nm = p.name || p.id.slice(0, 6);
+      _curCtx.font = 'bold 11px "DM Mono",monospace';
+      const tw = _curCtx.measureText(nm).width;
+      _curCtx.fillStyle = 'rgba(0,0,0,.75)';
+      _curCtx.fillRect(p.cx+10, p.cy-17, tw+10, 17);
+      _curCtx.fillStyle = p.color;
+      _curCtx.fillText(nm, p.cx+15, p.cy-4);
     });
-    if(mpIsHost)remove(snap.ref);
+  })();
+
+  addEventListener('resize', () => {
+    if (_curCanvas) { _curCanvas.width = innerWidth; _curCanvas.height = innerHeight; }
   });
-  _mpRefs.push(()=>off(drawRef));
-
-  // Host disconnect
-  const hostRef=ref(fbDb,'rooms/'+mpRoomCode+'/host');
-  onValue(hostRef,snap=>{if(!snap.exists()&&!mpIsHost&&mpConnected){mpSetStatus('Host left','#ff4444');mpDisconnect();}});
-  _mpRefs.push(()=>off(hostRef));
 }
 
-// ── Draw sync ──
-let _mpPendingEvents=[],_mpDrawTimer=null;
-function mpQueueDraw(events){
-  _mpPendingEvents.push(...events);
-  if(!_mpDrawTimer)_mpDrawTimer=setTimeout(()=>{
-    _mpDrawTimer=null;
-    if(!mpConnected||!_mpPendingEvents.length)return;
-    const ev=[..._mpPendingEvents];_mpPendingEvents=[];
-    push(ref(fbDb,'rooms/'+mpRoomCode+'/draws'),{by:mpMyId,events:ev,t:Date.now()});
-    if(mpIsHost&&Math.random()<.04)mpSaveWorld();
-  },50);
-}
-function mpSaveWorld(){
-  const cells=_mpSerializeWorld();
-  set(ref(fbDb,'rooms/'+mpRoomCode+'/world'),cells);
+function _destroyCursors() {
+  if (_curRaf)    { cancelAnimationFrame(_curRaf); _curRaf = null; }
+  if (_curCanvas) { _curCanvas.remove(); _curCanvas = null; _curCtx = null; }
 }
 
-// ── Cursor broadcast ──
-let _mpCursorTimer=null;
-function mpStartCursorBroadcast(){
-  document.addEventListener('mousemove',mpTrackMouse);
-  _mpCursorTimer=setInterval(()=>{
-    if(!mpConnected)return;
-    const me=mpPlayers[mpMyId];if(!me||me.cx==null)return;
-    set(ref(fbDb,`rooms/${mpRoomCode}/players/${mpMyId}/cx`),me.cx);
-    set(ref(fbDb,`rooms/${mpRoomCode}/players/${mpMyId}/cy`),me.cy);
-  },80);
+function _startCursors() {
+  addEventListener('mousemove', e => { _mx = e.clientX; _my = e.clientY; });
+  _curTimer = setInterval(() => {
+    if (!_connected) return;
+    _set(`rooms/${_room}/players/${_myId}/cx`, _mx);
+    _set(`rooms/${_room}/players/${_myId}/cy`, _my);
+  }, CURSOR_INTERVAL);
+}
+function _stopCursors() {
+  if (_curTimer) { clearInterval(_curTimer); _curTimer = null; }
 }
 
-// ── Hook draw ──
-let mpDrawHooked=false,_mpLastPos={x:-1,y:-1};
-function mpHookDraw(){
-  if(mpDrawHooked)return;mpDrawHooked=true;
-  const gc2=document.getElementById('gc');
-  function onDraw(e){
-    if(!mpConnected||!e.buttons)return;
-    const r=gc2.getBoundingClientRect();
-    const cx=0|((e.clientX-r.left)*(gc2.width/r.width)/_mpCELL());
-    const cy=0|((e.clientY-r.top)*(gc2.height/r.height)/_mpCELL());
-    if(cx===_mpLastPos.x&&cy===_mpLastPos.y&&e.type!=='mousedown')return;
-    _mpLastPos={x:cx,y:cy};
-    const elem=e.buttons===2?'eraser':_mpSel();
-    const h2=0|_mpBsz()/2,events=[];
-    for(let dy=-h2;dy<=h2;dy++)for(let dx=-h2;dx<=h2;dx++){
-      if(dx*dx+dy*dy>h2*h2+h2+1)continue;
-      const bx=cx+dx,by=cy+dy;if(!_mpInB(bx,by))continue;
-      events.push({x:bx,y:by,e:elem});
+// ── DRAW HOOK ─────────────────────────────────────────────────────
+function _hookDraw() {
+  if (_drawHooked) return;
+  _drawHooked = true;
+  const gc = document.getElementById('gc');
+  if (!gc) return;
+
+  function onDraw(e) {
+    if (!_connected || !e.buttons) return;
+    const r   = gc.getBoundingClientRect();
+    const cs  = _cellSz();
+    const cx  = Math.floor((e.clientX - r.left) * (gc.width  / r.width)  / cs);
+    const cy  = Math.floor((e.clientY - r.top)  * (gc.height / r.height) / cs);
+    if (cx === _lastDraw.x && cy === _lastDraw.y && e.type !== 'mousedown') return;
+    _lastDraw = { x: cx, y: cy };
+
+    const elem = (e.button === 2 || e.ctrlKey) ? 'eraser' : _sel();
+    const bsz  = _bsz();
+    const cells = [];
+
+    for (let dy = -bsz; dy <= bsz; dy++) for (let dx = -bsz; dx <= bsz; dx++) {
+      if (dx*dx + dy*dy > bsz*bsz) continue;
+      if (_inB(cx+dx, cy+dy)) cells.push({ x: cx+dx, y: cy+dy, e: elem });
     }
-    if(events.length)mpQueueDraw(events);
+
+    if (_isHost) {
+      // Host applies directly to the simulation
+      cells.forEach(a => { if (a.e === 'eraser') _gclear(a.x,a.y); else _gset(a.x,a.y,a.e); });
+    } else {
+      // Client sends to host via Firebase
+      cells.forEach(a => _queueAct(a.x, a.y, a.e));
+    }
   }
-  gc2.addEventListener('mousemove',onDraw);
-  gc2.addEventListener('mousedown',onDraw);
+
+  gc.addEventListener('mousemove', onDraw);
+  gc.addEventListener('mousedown', onDraw);
 }
 
-// ── World sync ──
-function mpDeserializeWorld(cells){
-  _mpDeserializeWorld(cells||[]);
+// ── WATCH ROOM ────────────────────────────────────────────────────
+function _watchRoom() {
+  _on(`rooms/${_room}/players`, 'value', snap => {
+    const data = snap.val() || {};
+    Object.values(data).forEach(p => {
+      if (!_players[p.id]) _players[p.id] = {};
+      if (p.id !== _myId) Object.assign(_players[p.id], p);
+      else Object.assign(_players[p.id], { id: p.id, color: p.color, name: p.name });
+    });
+    Object.keys(_players).forEach(id => { if (!data[id]) delete _players[id]; });
+    _updateList();
+    const n = Object.keys(_players).length;
+    _status(_isHost
+      ? `● Hosting — ${n} player${n!==1?'s':''}`
+      : `● Room ${_room} — ${n} player${n!==1?'s':''}`,
+      '#44ff88');
+  });
+
+  _on(`rooms/${_room}/host`, 'value', snap => {
+    if (!snap.exists() && !_isHost && _connected) {
+      _status('Host left the room', '#ff4444');
+      setTimeout(mpDisconnect, 1500);
+    }
+  });
 }
 
-// ── Disconnect ──
-async function mpDisconnect(){
-  mpConnected=false;
-  _mpRefs.forEach(fn=>fn());_mpRefs=[];
-  if(_mpCursorTimer){clearInterval(_mpCursorTimer);_mpCursorTimer=null;}
-  if(mpCursorAnimId){cancelAnimationFrame(mpCursorAnimId);mpCursorAnimId=null;}
-  document.removeEventListener('mousemove',mpTrackMouse);
-  if(mpCursorCanvas){mpCursorCanvas.remove();mpCursorCanvas=null;mpCursorCtx=null;}
-  if(mpIsHost){try{await remove(ref(fbDb,'rooms/'+mpRoomCode));}catch(e){}}
-  else{try{await remove(ref(fbDb,`rooms/${mpRoomCode}/players/${mpMyId}`));}catch(e){}}
-  mpPlayers={};mpDrawHooked=false;_mpLastPos={x:-1,y:-1};
-  mpRoomCode='';mpMyId='';mpIsHost=false;
-  document.getElementById('mpSetup').style.display='block';
-  document.getElementById('mpConnected').style.display='none';
-  document.getElementById('bMulti').style.color='#4ac8ff';
-  document.getElementById('bMulti').textContent='🌐 MULTI';
-  mpSetStatus('● Not connected','#333');
+// ── HOST ──────────────────────────────────────────────────────────
+async function mpHost() {
+  if (!_dbInit()) { _status('✗ Firebase unavailable', '#ff4444'); return; }
+  if (_connected)  { mpDisconnect(); return; }
+
+  _room    = _rand4();
+  _myId    = _uid();
+  _myColor = MP_COLORS[0];
+  _myName  = 'Host';
+  _isHost  = true;
+
+  _status('Creating room...', '#ffcc44');
+
+  try {
+    const ex = await _get(`rooms/${_room}/host`);
+    if (ex.exists()) _room = _rand4();
+
+    await _set(`rooms/${_room}/host`, _myId);
+    await _set(`rooms/${_room}/players/${_myId}`, { id: _myId, color: _myColor, name: _myName, cx: null, cy: null });
+    _r(`rooms/${_room}/host`).onDisconnect().remove();
+    _r(`rooms/${_room}/players/${_myId}`).onDisconnect().remove();
+    await _set(`rooms/${_room}/world`, _serialize());
+
+    _players[_myId] = { id: _myId, color: _myColor, name: _myName };
+    _connected = true;
+
+    // HOST keeps simulation running — it's the authority
+    if (window.PW?.Simulation && !PW.Simulation.running) PW.Simulation.start();
+
+    _watchRoom();
+    _watchActions();
+    _startDiffs();
+    _hookDraw();
+    _initCursors();
+    _startCursors();
+    _showConnected();
+    _status(`● Hosting — Room: ${_room}`, '#44ff88');
+
+  } catch(e) {
+    console.error('[MP] Host error:', e);
+    _status('✗ Failed to create room', '#ff4444');
+  }
 }
 
-// ── UI ──
-function mpSetStatus(msg,col='#555'){const el=document.getElementById('mpStatus');if(el){el.textContent=msg;el.style.color=col;}}
-function mpShowConnected(){
-  document.getElementById('mpSetup').style.display='none';
-  document.getElementById('mpConnected').style.display='block';
-  document.getElementById('mpRoomDisplay').textContent=mpRoomCode;
-  document.getElementById('bMulti').style.color=mpMyColor;
-  document.getElementById('bMulti').textContent='🌐 '+mpRoomCode;
+// ── JOIN ──────────────────────────────────────────────────────────
+async function mpJoin(code) {
+  if (!_dbInit()) { _status('✗ Firebase unavailable', '#ff4444'); return; }
+  if (_connected)  { mpDisconnect(); return; }
+
+  code = (code || '').trim().toUpperCase();
+  const errEl = document.getElementById('mpJoinErr');
+  if (code.length !== 4) { if (errEl) errEl.textContent = 'Enter a 4-letter code.'; return; }
+  if (errEl) errEl.textContent = '';
+
+  _status(`Connecting to ${code}...`, '#ffcc44');
+
+  try {
+    const hostSnap = await _get(`rooms/${code}/host`);
+    if (!hostSnap.exists()) {
+      if (errEl) errEl.textContent = 'Room not found or host left.';
+      _status('✗ Room not found', '#ff4444');
+      return;
+    }
+
+    _room   = code;
+    _myId   = _uid();
+    _isHost = false;
+
+    const pSnap      = await _get(`rooms/${code}/players`);
+    const usedColors = pSnap.exists() ? Object.values(pSnap.val()).map(p => p.color) : [];
+    const idx        = Object.keys(pSnap.val() || {}).length + 1;
+    _myColor = MP_COLORS.find(c => !usedColors.includes(c)) || MP_COLORS[idx % MP_COLORS.length];
+    _myName  = 'P' + idx;
+
+    await _set(`rooms/${code}/players/${_myId}`, { id: _myId, color: _myColor, name: _myName, cx: null, cy: null });
+    _r(`rooms/${code}/players/${_myId}`).onDisconnect().remove();
+
+    const wSnap = await _get(`rooms/${code}/world`);
+    if (wSnap.exists()) _deserialize(wSnap.val());
+
+    _players[_myId] = { id: _myId, color: _myColor, name: _myName };
+    _connected = true;
+
+    // CLIENT pauses simulation — host is god
+    if (window.PW?.Simulation) PW.Simulation.pause();
+
+    _watchRoom();
+    _watchDiffs();
+    _hookDraw();
+    _initCursors();
+    _startCursors();
+    _showConnected();
+    _status(`● In room ${_room}`, '#44ff88');
+
+  } catch(e) {
+    console.error('[MP] Join error:', e);
+    _status('✗ Failed to join', '#ff4444');
+  }
 }
-function mpUpdatePlayerList(){
-  const el=document.getElementById('mpPlayerList');if(!el)return;el.innerHTML='';
-  Object.values(mpPlayers).forEach(p=>{
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;font-family:"DM Mono",monospace;font-size:.62rem;margin-bottom:5px;';
-    row.innerHTML=`<div style="width:9px;height:9px;border-radius:50%;background:${p.color};flex-shrink:0;box-shadow:0 0 5px ${p.color};"></div><span style="color:#888;">${p.name||p.id.slice(0,8)}${p.id===mpMyId?' <span style="color:#444;">(you)</span>':''}</span>`;
+
+// ── DISCONNECT ────────────────────────────────────────────────────
+async function mpDisconnect() {
+  _connected = false;
+  _stopDiffs();
+  _stopCursors();
+  _offAll();
+  _destroyCursors();
+
+  if (_db) {
+    try {
+      if (_isHost) await _rm(`rooms/${_room}`);
+      else         await _rm(`rooms/${_room}/players/${_myId}`);
+    } catch(e) {}
+  }
+
+  if (!_isHost && window.PW?.Simulation) PW.Simulation.resume();
+
+  _players    = {};
+  _drawHooked = false;
+  _lastDraw   = { x: -1, y: -1 };
+  _pendingActs = [];
+  _prevSnap    = null;
+  _room = _myId = _myColor = _myName = '';
+  _isHost = false;
+
+  _showDisconnected();
+  _status('● Not connected', '#333');
+}
+
+// ── UI ────────────────────────────────────────────────────────────
+function _status(msg, col = '#555') {
+  const el = document.getElementById('mpStatus');
+  if (el) { el.textContent = msg; el.style.color = col; }
+}
+
+function _showConnected() {
+  document.getElementById('mpSetup')?.style.setProperty('display', 'none');
+  document.getElementById('mpConnected')?.style.setProperty('display', 'block');
+  const rd = document.getElementById('mpRoomDisplay');
+  if (rd) rd.textContent = _room;
+  const mb = document.getElementById('bMulti');
+  if (mb) { mb.style.color = _myColor; mb.textContent = '🌐 ' + _room; }
+  const badge = document.getElementById('mpRoleBadge');
+  if (badge) { badge.textContent = _isHost ? '👑 HOST' : '🎮 CLIENT'; badge.style.color = _isHost ? '#ffcc44' : '#4ac8ff'; }
+}
+
+function _showDisconnected() {
+  document.getElementById('mpSetup')?.style.setProperty('display', 'block');
+  document.getElementById('mpConnected')?.style.setProperty('display', 'none');
+  const mb = document.getElementById('bMulti');
+  if (mb) { mb.style.color = '#4ac8ff'; mb.textContent = '🌐 MULTI'; }
+}
+
+function _updateList() {
+  const el = document.getElementById('mpPlayerList');
+  if (!el) return;
+  el.innerHTML = '';
+  Object.values(_players).forEach(p => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;font-family:"DM Mono",monospace;font-size:.62rem;margin-bottom:5px;';
+    const me  = p.id === _myId;
+    const host = _isHost && me;
+    row.innerHTML = `
+      <div style="width:9px;height:9px;border-radius:50%;background:${p.color};flex-shrink:0;box-shadow:0 0 6px ${p.color};"></div>
+      <span style="color:#888;">${p.name||p.id.slice(0,8)}</span>
+      ${me   ? '<span style="color:#444;font-size:.5rem;">(you)</span>'   : ''}
+      ${host ? '<span style="color:#ffcc44;font-size:.5rem;">👑 host</span>' : ''}
+    `;
     el.appendChild(row);
   });
 }
-function mpCopyCode(){
-  navigator.clipboard?.writeText(mpRoomCode).catch(()=>{});
-  const btn=event.target;btn.textContent='copied!';setTimeout(()=>btn.textContent='copy',1500);
+
+function mpCopyCode() {
+  navigator.clipboard?.writeText(_room).catch(() => {});
+  const btn = document.querySelector('[onclick="mpCopyCode()"]');
+  if (btn) { btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 1500); }
 }
 
-// ── Wire buttons ──
-document.getElementById('bMulti').onclick=()=>document.getElementById('panMulti').classList.add('open');
-document.getElementById('mpHostBtn').onclick=()=>mpHost();
-document.getElementById('mpJoinBtn').onclick=()=>mpJoin(document.getElementById('mpJoinCode').value);
-document.getElementById('mpJoinCode').addEventListener('keydown',e=>{if(e.key==='Enter')mpJoin(e.target.value);});
-document.getElementById('mpLeaveBtn').onclick=()=>mpDisconnect();
-document.getElementById('mpJoinCode').oninput=function(){this.value=this.value.toUpperCase();};
-window.mpCopyCode=mpCopyCode;
+// ── UTILS ─────────────────────────────────────────────────────────
+function _uid()   { return Math.random().toString(36).slice(2, 10); }
+function _rand4() { return Array.from({length:4}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[0|Math.random()*32]).join(''); }
 
-
-
-// ── INIT ─────────────────────────────────────────────────────────
-// Wire up buttons once DOM is ready
+// ── WIRE ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('bMulti').onclick=()=>document.getElementById('panMulti').classList.add('open');
-  document.getElementById('mpHostBtn').onclick=()=>mpHost();
-  document.getElementById('mpJoinBtn').onclick=()=>mpJoin(document.getElementById('mpJoinCode').value);
-  document.getElementById('mpJoinCode').addEventListener('keydown',e=>{if(e.key==='Enter')mpJoin(e.target.value);});
-  document.getElementById('mpLeaveBtn').onclick=()=>mpDisconnect();
-  document.getElementById('mpJoinCode').oninput=function(){this.value=this.value.toUpperCase();};
-  window.mpCopyCode=mpCopyCode;
+  document.getElementById('bMulti')?.addEventListener('click', () =>
+    document.getElementById('panMulti')?.classList.add('open'));
+  document.getElementById('mpHostBtn')?.addEventListener('click', mpHost);
+  document.getElementById('mpJoinBtn')?.addEventListener('click', () =>
+    mpJoin(document.getElementById('mpJoinCode')?.value));
+  document.getElementById('mpJoinCode')?.addEventListener('keydown', e => {
+    e.target.value = e.target.value.toUpperCase();
+    if (e.key === 'Enter') mpJoin(e.target.value);
+  });
+  document.getElementById('mpJoinCode')?.addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
+  document.getElementById('mpLeaveBtn')?.addEventListener('click', mpDisconnect);
 });
+
+window.mpHost       = mpHost;
+window.mpJoin       = mpJoin;
+window.mpDisconnect = mpDisconnect;
+window.mpCopyCode   = mpCopyCode;
