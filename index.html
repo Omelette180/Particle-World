@@ -35,7 +35,7 @@
       This game is still in <span style="color:#a855f7;">active development</span>.<br>
       You may encounter bugs, missing features, or<br>
       incomplete elements. Physics is being rebuilt.<br><br>
-      <span style="color:#444;">Version v1.3.0 Beta · omelette180</span>
+      <span style="color:#444;">Version v1.4.0 Beta · omelette180</span>
     </div>
     <button id="betaWarnBtn" style="
       background:linear-gradient(135deg,#1a0a2a,#2a0a3a);
@@ -613,7 +613,7 @@
     </div>
     <div id="menu-content" style="display:none;position:relative;z-index:1;">
       <div class="pw-logo">PARTICLE<span>WORLD</span></div>
-      <div class="pw-tagline">Sandbox Simulation &nbsp;·&nbsp; v1.3 Beta</div>
+      <div class="pw-tagline">Sandbox Simulation &nbsp;·&nbsp; v1.4 Beta</div>
       <div class="pw-tagline" style="font-size:.6rem;color:#333;margin-top:-.5rem;margin-bottom:2rem;letter-spacing:.12em">Physics upgraded · Bugs fixed · More elements</div>
       <div class="beta-pill">✦ v1.3.0 — Beta</div>
       <button class="menu-btn primary" id="mPlay">▶ &nbsp;PLAY</button>
@@ -1428,6 +1428,8 @@
     </div>
     <div id="mpPlayerList" style="margin-bottom:10px;"></div>
     <div style="font-size:.55rem;color:#222;line-height:2;">All players draw freely · Cursors visible to everyone</div>
+    <div id="mpRoleBadge" style="font-size:.5rem;letter-spacing:.08em;padding:2px 8px;border:1px solid #1a1a2a;background:#050508;display:inline-block;margin-top:4px;"></div>
+    <div id="mpAuthStatus" style="font-size:.48rem;color:#2a2a2a;margin-top:3px;letter-spacing:.06em;"></div>
     <button class="mb" id="mpLeaveBtn" style="margin-top:10px;width:100%;">✕ Leave Room</button>
   </div>
 
@@ -1859,10 +1861,11 @@
 </div></div>
 
 <div id="ro"></div>
+<div id="panels"></div>
 
-<!-- ═══ FIREBASE SDK (compat) ═══ -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<!-- ═══ FIREBASE SDK ═══ -->
+<!-- Firebase v9 modular SDK — imported directly inside multiplayer.js (type=module) -->
+<!-- No compat scripts needed — multiplayer.js handles auth + database -->
 
 <!-- ═══ CORE ENGINE ═══ -->
 <script src="js/firebase-init.js"></script>
@@ -1889,7 +1892,7 @@
 <script src="js/physics.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/chat.js"></script>
-<script src="js/multiplayer.js"></script>
+<script type="module" src="js/multiplayer.js"></script>
 <script src="js/account.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/achievements.js"></script>
