@@ -1,5 +1,5 @@
 /**
- * PARTICLE WORLD v2.0 — js/admin.js
+ * PARTICLE WORLD v1.3 Beta — js/admin.js
  * BUG FIX: All DOM queries now inside DOMContentLoaded.
  * Admin code: omariscool
  */
