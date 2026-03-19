@@ -1,5 +1,5 @@
 /**
- * PARTICLE WORLD v1.3 Beta — core.js
+ * PARTICLE WORLD v1.4 Beta — core.js
  * Grid, renderer, game loop, element registry.
  * No element logic lives here — elements register themselves via ElementRegistry.
  */
@@ -703,7 +703,7 @@ const Input = (() => {
 // ══════════════════════════════════════════════════════════════════
 window.PW = {
   Grid, Renderer, Simulation, Input, Helpers, ElementRegistry,
-  version: '1.3.0',
+  version: '1.4.0',
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -736,7 +736,7 @@ function initGame() {
   Input.init(canvas, CELL_SIZE);
   Simulation.start();
 
-  console.log(`Particle World v1.3 Beta — ${ElementRegistry.count()} elements loaded`);
+  console.log(`Particle World v1.4 Beta — ${ElementRegistry.count()} elements loaded`);
 }
 
 // ══════════════════════════════════════════════════════════════════
