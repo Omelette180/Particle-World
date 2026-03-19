@@ -1,516 +1,531 @@
-/**
- * PARTICLE WORLD v1.3 Beta — js/multiplayer.js
- *
- * HOST-AUTHORITY MULTIPLAYER
- * ─────────────────────────────────────────────────────────────
- * One world. One simulation. One brain running everything.
- *
- *  HOST  → runs PW.Simulation (the only simulation)
- *           receives player draw actions from Firebase
- *           applies them to THE ONE grid
- *           broadcasts compressed world diffs every 100ms
- *
- *  CLIENT → simulation PAUSED (host drives the world)
- *            sends draw actions to Firebase → host applies them
- *            receives world diffs → applies to local display
- *            everyone sees the same explosion, the same zombie
- *
- * No more parallel universes. No more "it blew up on my screen but not yours."
- */
+// ── PARTICLE WORLD — HOST-AUTHORITY MULTIPLAYER ───────────────────
+// Based directly on your upgraded Firebase v9 code.
+// Wired to PW.Grid instead of a separate grid array.
+// Anonymous auth, modular SDK, diff broadcast, cursor overlay.
 
-'use strict';
+import { initializeApp }                    from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+import { getAuth, signInAnonymously }        from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
+import { getDatabase, ref, set, push,
+         remove, onValue, onChildAdded,
+         get, off, query, orderByChild,
+         startAt, onDisconnect }             from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
 
-// Uses firebase compat SDK already loaded in index.html
-// (firebase.initializeApp, firebase.database)
-
-const _FB_CFG = {
-  apiKey:            'AIzaSyBnVtCaMHdousMGFEfDGi57SVf5KrkTF4A',
-  authDomain:        'particle-world.firebaseapp.com',
-  databaseURL:       'https://particle-world-default-rtdb.firebaseio.com',
-  projectId:         'particle-world',
-  storageBucket:     'particle-world.firebasestorage.app',
-  messagingSenderId: '5494928895',
-  appId:             '1:5494928895:web:adcedb5bedf79fa461a3ca',
+// ── CONFIG ────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyBnVtCaMHdousMGFEfDGi57SVf5KrkTF4A",
+  authDomain:        "particle-world.firebaseapp.com",
+  databaseURL:       "https://particle-world-default-rtdb.firebaseio.com",
+  projectId:         "particle-world",
+  storageBucket:     "particle-world.firebasestorage.app",
+  messagingSenderId: "5494928895",
+  appId:             "1:5494928895:web:adcedb5bedf79fa461a3ca"
 };
 
-let _db       = null;
-let _dbReady  = false;
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
 
-function _dbInit() {
-  if (_dbReady) return true;
-  try {
-    if (!window.firebase) { console.warn('[MP] Firebase compat SDK not loaded'); return false; }
-    if (!firebase.apps.length) firebase.initializeApp(_FB_CFG);
-    _db = firebase.database();
-    window._fbDb = _db;
-    _dbReady = true;
-    // Log visit
-    _db.ref('visits/' + Date.now()).set({
-      host: location.hostname, href: location.href,
-      ua: navigator.userAgent.slice(0, 100), ts: Date.now(),
-      stolen: !window._pwAllowed,
-    }).catch(() => {});
-    return true;
-  } catch(e) {
-    console.error('[MP] Firebase init:', e);
-    return false;
-  }
+// Expose db globally so chat.js and firebase-init.js can share it
+window._fbDb    = db;
+window._fbReady = true;
+
+// ── STATE ─────────────────────────────────────────────────────────
+let firebaseReady = false;
+let isHost        = false;
+let roomCode      = '';
+let myId          = '';
+let myColor       = '#4ac8ff';
+let players       = {};   // id → { id, name, color, cx, cy }
+let _unsubs       = [];   // listener cleanup
+
+const MP_COLORS = ['#4ac8ff','#ff6644','#44ff88','#ffcc44','#ff44ff','#88ffcc','#ff88aa','#c77dff'];
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function _uid()     { return Math.random().toString(36).slice(2, 10); }
+function _randRoom(){ return Array.from({length:4}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join(''); }
+
+// ── ANONYMOUS AUTH ────────────────────────────────────────────────
+// Players sign in automatically — no account needed for multiplayer
+signInAnonymously(auth)
+  .then(() => {
+    myId          = auth.currentUser.uid;
+    firebaseReady = true;
+    console.log("[MP] Signed in anonymously:", myId.slice(0,8));
+  })
+  .catch(err => {
+    console.warn("[MP] Anonymous sign-in failed:", err.message, "— using random ID");
+    myId          = _uid();
+    firebaseReady = true;
+  });
+
+function _waitReady() {
+  return new Promise(resolve => {
+    if (firebaseReady) { resolve(); return; }
+    const t = setInterval(() => { if (firebaseReady) { clearInterval(t); resolve(); } }, 100);
+    setTimeout(() => { clearInterval(t); firebaseReady = true; resolve(); }, 4000);
+  });
 }
 
-// ── Config ────────────────────────────────────────────────────────
-const MP_COLORS       = ['#4ac8ff','#ff6644','#44ff88','#ffcc44','#ff44ff','#88ffcc','#ff88aa','#c77dff'];
-const DIFF_INTERVAL   = 100;   // ms between world diffs
-const CURSOR_INTERVAL = 80;    // ms between cursor broadcasts
-const ACTION_BATCH    = 40;    // ms client batches draw actions
-const MAX_DIFF        = 2000;  // max cells in one diff packet
+// ── PW.GRID BRIDGE ────────────────────────────────────────────────
+// Your code had grid[y][x] — we use PW.Grid instead.
+// Everything else (diff math, action system, cursor) is your code unchanged.
+const G = {
+  cols()      { return window.PW?.Grid?.cols ?? 200; },
+  rows()      { return window.PW?.Grid?.rows ?? 120; },
+  inB(x, y)   { return window.PW?.Grid?.inBounds(x, y) ?? (x>=0 && y>=0 && x<200 && y<120); },
+  get(x, y)   { return window.PW?.Grid?.getType(x, y) ?? null; },
+  set(x, y, t){ window.PW?.Grid?.setCell(x, y, t); },
+  clear(x, y) { window.PW?.Grid?.clearCell(x, y); },
+  clearAll()  { window.PW?.Grid?.clear(); },
+  cellSize()  {
+    const gc = document.getElementById('gc');
+    if (gc && window.PW?.Grid) return gc.width / PW.Grid.cols;
+    return parseInt(localStorage.getItem('pw_cellSize') || '3');
+  },
+};
 
-// ── State ─────────────────────────────────────────────────────────
-let _room      = '';
-let _myId      = '';
-let _myColor   = '';
-let _myName    = '';
-let _isHost    = false;
-let _connected = false;
-let _players   = {};
-let _unsubs    = [];  // cleanup functions
+// ── DIFF SYSTEM (your code, wired to PW.Grid) ─────────────────────
+let prevSnapshot       = null;
+const DIFF_INTERVAL    = 100;
+const MAX_DIFF_CELLS   = 2000;
+let diffTimer          = null;
 
-// Host only
-let _prevSnap    = null;
-let _diffTimer   = null;
-
-// Client only
-let _pendingActs = [];
-let _actTimer    = null;
-
-// Cursors
-let _curCanvas = null;
-let _curCtx    = null;
-let _curRaf    = null;
-let _curTimer  = null;
-let _mx = 0, _my = 0;
-
-// Draw hook
-let _drawHooked  = false;
-let _lastDraw    = { x: -1, y: -1 };
-
-// ── Firebase helpers ──────────────────────────────────────────────
-const _r   = path => _db.ref(path);
-const _set = (path, val) => _r(path).set(val);
-const _get = path => _r(path).once('value');
-const _rm  = path => _r(path).remove();
-const _push = (path, val) => _r(path).push(val);
-
-function _on(path, evt, cb) {
-  const ref = _r(path);
-  ref.on(evt, cb);
-  _unsubs.push(() => ref.off(evt, cb));
-}
-function _offAll() { _unsubs.forEach(fn => fn()); _unsubs = []; }
-
-// ── Grid bridge ───────────────────────────────────────────────────
-function _cols()    { return window.PW?.Grid?.cols ?? 200; }
-function _rows()    { return window.PW?.Grid?.rows ?? 120; }
-function _inB(x,y)  { return window.PW?.Grid?.inBounds(x,y) ?? false; }
-function _gtype(x,y){ return window.PW?.Grid?.getType(x,y) ?? 'empty'; }
-function _gset(x,y,t){ window.PW?.Grid?.setCell(x,y,t); }
-function _gclear(x,y){ window.PW?.Grid?.clearCell(x,y); }
-function _cellSz()  {
-  const gc = document.getElementById('gc');
-  if (gc && window.PW?.Grid) return gc.width / PW.Grid.cols;
-  return parseInt(localStorage.getItem('pw_cellSize') || '3');
-}
-function _sel()  { return window.PW?.Input?.selected ?? 'sand'; }
-function _bsz()  { return window.PW?.Input?.brushSize ?? 3; }
-
-// ── Serialization ─────────────────────────────────────────────────
-function _serialize() {
-  const out = [], C = _cols(), R = _rows();
-  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
-    const t = _gtype(x, y);
-    if (t && t !== 'empty') out.push(y * C + x, t);
-  }
-  return out;
-}
-
-function _deserialize(data) {
-  if (!window.PW?.Grid) return;
-  PW.Grid.clear();
-  const d = data || [], C = _cols();
-  for (let i = 0; i < d.length - 1; i += 2) {
-    const x = d[i] % C, y = Math.floor(d[i] / C);
-    if (_inB(x, y)) _gset(x, y, d[i+1]);
-  }
-}
-
-// ── Diffing ───────────────────────────────────────────────────────
-function _snapshot() {
-  const C = _cols(), R = _rows(), snap = new Array(C * R);
-  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) snap[y*C+x] = _gtype(x,y);
+function makeSnapshot() {
+  const W = G.cols(), H = G.rows();
+  const snap = new Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      snap[y * W + x] = G.get(x, y);  // null or type string
   return snap;
 }
 
-function _diff(old_, new_) {
-  const d = [];
-  for (let i = 0; i < old_.length && d.length < MAX_DIFF * 2; i++) {
-    if (old_[i] !== new_[i]) d.push(i, new_[i] === 'empty' ? '' : new_[i]);
+function makeDiff(oldSnap, newSnap) {
+  const diff = [];
+  for (let i = 0; i < Math.min(oldSnap.length, newSnap.length) && diff.length < MAX_DIFF_CELLS * 2; i++) {
+    if (oldSnap[i] !== newSnap[i]) {
+      diff.push(i, newSnap[i] === null || newSnap[i] === 'empty' ? '' : newSnap[i]);
+    }
   }
-  return d;
+  return diff;
 }
 
-function _applyDiff(d) {
-  if (!window.PW?.Grid) return;
-  const C = _cols();
-  for (let i = 0; i < d.length - 1; i += 2) {
-    const x = d[i] % C, y = Math.floor(d[i] / C);
-    if (!_inB(x, y)) continue;
-    if (!d[i+1]) _gclear(x, y); else _gset(x, y, d[i+1]);
+function applyDiff(diff) {
+  if (!diff?.length) return;
+  const W = G.cols();
+  for (let i = 0; i < diff.length - 1; i += 2) {
+    const idx  = diff[i];
+    const type = diff[i + 1];
+    const x    = idx % W;
+    const y    = Math.floor(idx / W);
+    if (!G.inB(x, y)) continue;
+    if (!type || type === '') G.clear(x, y);
+    else G.set(x, y, type);
   }
 }
 
-// ── HOST: broadcast world diffs ───────────────────────────────────
-function _startDiffs() {
-  _prevSnap = _snapshot();
-  _diffTimer = setInterval(() => {
-    if (!_connected || !_isHost) return;
-    const newSnap = _snapshot();
-    const d = _diff(_prevSnap, newSnap);
-    _prevSnap = newSnap;
-    if (!d.length) return;
-    _push(`rooms/${_room}/diffs`, { d, t: Date.now() }).catch(() => {});
-    // Clean up old diffs occasionally
-    if (Math.random() < 0.05) _rm(`rooms/${_room}/diffs`);
+function startDiffBroadcast() {
+  prevSnapshot = makeSnapshot();
+  diffTimer = setInterval(() => {
+    if (!isHost) return;
+    const snap = makeSnapshot();
+    const diff = makeDiff(prevSnapshot, snap);
+    prevSnapshot = snap;
+    if (diff.length === 0) return;
+    push(ref(db, `rooms/${roomCode}/diffs`), { d: diff, t: Date.now() })
+      .catch(e => console.warn("[MP] Diff push failed:", e));
+    // Prune old diffs occasionally so Firebase doesn't grow forever
+    if (Math.random() < 0.05) remove(ref(db, `rooms/${roomCode}/diffs`));
   }, DIFF_INTERVAL);
 }
-function _stopDiffs() {
-  if (_diffTimer) { clearInterval(_diffTimer); _diffTimer = null; }
+
+// ── CLIENT ACTION QUEUE (your code, wired to PW.Grid) ────────────
+let pendingActions     = [];
+const ACTION_BATCH_MS  = 40;
+let actionTimer        = null;
+
+function queueAction(x, y, type) {
+  pendingActions.push({ x, y, e: type });
+  if (!actionTimer) {
+    actionTimer = setTimeout(() => {
+      actionTimer = null;
+      if (!pendingActions.length) return;
+      push(ref(db, `rooms/${roomCode}/actions`), {
+        by:      myId,
+        actions: [...pendingActions],
+        t:       Date.now(),
+      }).catch(() => {});
+      pendingActions = [];
+    }, ACTION_BATCH_MS);
+  }
 }
 
-// ── HOST: apply client actions ────────────────────────────────────
-function _watchActions() {
+function watchClientActions() {
   let skip = true;
-  setTimeout(() => skip = false, 1000);
-  _on(`rooms/${_room}/actions`, 'child_added', snap => {
+  setTimeout(() => skip = false, 800);
+  const actRef = ref(db, `rooms/${roomCode}/actions`);
+  onChildAdded(actRef, snap => {
     if (skip) return;
     const data = snap.val();
-    if (!data || data.by === _myId) { snap.ref.remove(); return; }
-    (data.acts || []).forEach(a => {
-      if (!_inB(a.x, a.y)) return;
-      if (a.e === 'eraser' || !a.e) _gclear(a.x, a.y);
-      else _gset(a.x, a.y, a.e);
+    if (!data || data.by === myId) { remove(snap.ref); return; }
+    // HOST applies client actions directly to the ONE simulation grid
+    (data.actions || []).forEach(a => {
+      if (!G.inB(a.x, a.y)) return;
+      if (a.e === 'eraser' || !a.e) G.clear(a.x, a.y);
+      else G.set(a.x, a.y, a.e);
     });
-    snap.ref.remove();
+    remove(snap.ref);
   });
+  _unsubs.push(() => off(actRef));
 }
 
-// ── CLIENT: receive diffs ─────────────────────────────────────────
-function _watchDiffs() {
-  const since = Date.now() - 200;
-  const ref = _r(`rooms/${_room}/diffs`).orderByChild('t').startAt(since);
-  ref.on('child_added', snap => {
-    if (!_connected) return;
+// ── CLIENT DIFF WATCH (your watchHostDiffs, adapted) ─────────────
+function watchHostDiffs() {
+  const since   = Date.now() - 200;
+  const diffRef = query(ref(db, `rooms/${roomCode}/diffs`), orderByChild('t'), startAt(since));
+  onChildAdded(diffRef, snap => {
     const data = snap.val();
-    if (data?.d) _applyDiff(data.d);
+    if (!data) return;
+    applyDiff(data.d);
   });
-  _unsubs.push(() => ref.off('child_added'));
+  _unsubs.push(() => off(diffRef));
 }
 
-// ── CLIENT: send draw actions ─────────────────────────────────────
-function _queueAct(x, y, e) {
-  _pendingActs.push({ x, y, e });
-  if (!_actTimer) {
-    _actTimer = setTimeout(() => {
-      _actTimer = null;
-      if (!_connected || !_pendingActs.length) return;
-      const acts = [..._pendingActs]; _pendingActs = [];
-      _push(`rooms/${_room}/actions`, { by: _myId, acts, t: Date.now() }).catch(() => {});
-    }, ACTION_BATCH);
-  }
+// ── CURSOR SYSTEM (your code, unchanged) ─────────────────────────
+let myCursorX  = 0, myCursorY = 0;
+let cursorTimer = null;
+
+function startCursorBroadcast() {
+  document.addEventListener('mousemove', e => {
+    myCursorX = e.clientX;
+    myCursorY = e.clientY;
+  });
+  cursorTimer = setInterval(() => {
+    set(ref(db, `rooms/${roomCode}/players/${myId}/cx`), myCursorX);
+    set(ref(db, `rooms/${roomCode}/players/${myId}/cy`), myCursorY);
+  }, 80);
+}
+
+function stopCursorBroadcast() {
+  if (cursorTimer) { clearInterval(cursorTimer); cursorTimer = null; }
 }
 
 // ── CURSOR OVERLAY ────────────────────────────────────────────────
-function _initCursors() {
-  if (_curCanvas) { cancelAnimationFrame(_curRaf); _curCanvas.remove(); }
-  _curCanvas = document.createElement('canvas');
-  _curCanvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000;';
-  _curCanvas.width  = innerWidth;
-  _curCanvas.height = innerHeight;
-  document.body.appendChild(_curCanvas);
-  _curCtx = _curCanvas.getContext('2d');
+let curCanvas = null, curCtx = null, curRaf = null;
+
+function initCursorOverlay() {
+  if (curCanvas) { cancelAnimationFrame(curRaf); curCanvas.remove(); }
+  curCanvas = document.createElement('canvas');
+  curCanvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000;';
+  curCanvas.width  = innerWidth;
+  curCanvas.height = innerHeight;
+  document.body.appendChild(curCanvas);
+  curCtx = curCanvas.getContext('2d');
 
   (function loop() {
-    _curRaf = requestAnimationFrame(loop);
-    _curCtx.clearRect(0, 0, _curCanvas.width, _curCanvas.height);
-    Object.values(_players).forEach(p => {
-      if (p.id === _myId || p.cx == null) return;
-      _curCtx.beginPath();
-      _curCtx.arc(p.cx, p.cy, 7, 0, Math.PI * 2);
-      _curCtx.fillStyle   = p.color + 'cc';
-      _curCtx.fill();
-      _curCtx.strokeStyle = '#000';
-      _curCtx.lineWidth   = 1.5;
-      _curCtx.stroke();
-      const nm = p.name || p.id.slice(0, 6);
-      _curCtx.font = 'bold 11px "DM Mono",monospace';
-      const tw = _curCtx.measureText(nm).width;
-      _curCtx.fillStyle = 'rgba(0,0,0,.75)';
-      _curCtx.fillRect(p.cx+10, p.cy-17, tw+10, 17);
-      _curCtx.fillStyle = p.color;
-      _curCtx.fillText(nm, p.cx+15, p.cy-4);
+    curRaf = requestAnimationFrame(loop);
+    curCtx.clearRect(0, 0, curCanvas.width, curCanvas.height);
+    Object.values(players).forEach(p => {
+      if (p.id === myId || p.cx == null) return;
+      curCtx.beginPath();
+      curCtx.arc(p.cx, p.cy, 7, 0, Math.PI * 2);
+      curCtx.fillStyle   = p.color + 'bb';
+      curCtx.fill();
+      curCtx.strokeStyle = '#000';
+      curCtx.lineWidth   = 1.5;
+      curCtx.stroke();
+      const name = p.name || p.id.slice(0, 6);
+      curCtx.font = 'bold 11px "DM Mono",monospace';
+      const tw = curCtx.measureText(name).width;
+      curCtx.fillStyle = 'rgba(0,0,0,.8)';
+      curCtx.fillRect(p.cx + 10, p.cy - 17, tw + 10, 17);
+      curCtx.fillStyle = p.color;
+      curCtx.fillText(name, p.cx + 15, p.cy - 4);
     });
   })();
 
   addEventListener('resize', () => {
-    if (_curCanvas) { _curCanvas.width = innerWidth; _curCanvas.height = innerHeight; }
+    if (curCanvas) { curCanvas.width = innerWidth; curCanvas.height = innerHeight; }
   });
 }
 
-function _destroyCursors() {
-  if (_curRaf)    { cancelAnimationFrame(_curRaf); _curRaf = null; }
-  if (_curCanvas) { _curCanvas.remove(); _curCanvas = null; _curCtx = null; }
+function destroyCursorOverlay() {
+  if (curRaf)    { cancelAnimationFrame(curRaf); curRaf = null; }
+  if (curCanvas) { curCanvas.remove(); curCanvas = null; curCtx = null; }
 }
 
-function _startCursors() {
-  addEventListener('mousemove', e => { _mx = e.clientX; _my = e.clientY; });
-  _curTimer = setInterval(() => {
-    if (!_connected) return;
-    _set(`rooms/${_room}/players/${_myId}/cx`, _mx);
-    _set(`rooms/${_room}/players/${_myId}/cy`, _my);
-  }, CURSOR_INTERVAL);
-}
-function _stopCursors() {
-  if (_curTimer) { clearInterval(_curTimer); _curTimer = null; }
-}
+// ── DRAW HOOK (your hookDraw, wired to PW.Grid + PW.Input) ───────
+let drawHooked = false;
+let lastPos    = { x: -1, y: -1 };
 
-// ── DRAW HOOK ─────────────────────────────────────────────────────
-function _hookDraw() {
-  if (_drawHooked) return;
-  _drawHooked = true;
+function hookDraw() {
+  if (drawHooked) return;
+  drawHooked = true;
   const gc = document.getElementById('gc');
   if (!gc) return;
 
   function onDraw(e) {
-    if (!_connected || !e.buttons) return;
-    const r   = gc.getBoundingClientRect();
-    const cs  = _cellSz();
-    const cx  = Math.floor((e.clientX - r.left) * (gc.width  / r.width)  / cs);
-    const cy  = Math.floor((e.clientY - r.top)  * (gc.height / r.height) / cs);
-    if (cx === _lastDraw.x && cy === _lastDraw.y && e.type !== 'mousedown') return;
-    _lastDraw = { x: cx, y: cy };
+    if (!e.buttons) return;
+    const rect = gc.getBoundingClientRect();
+    const cs   = G.cellSize();
+    const cx   = Math.floor((e.clientX - rect.left) * (gc.width  / rect.width)  / cs);
+    const cy   = Math.floor((e.clientY - rect.top)  * (gc.height / rect.height) / cs);
+    if (cx === lastPos.x && cy === lastPos.y && e.type !== 'mousedown') return;
+    lastPos = { x: cx, y: cy };
 
-    const elem = (e.button === 2 || e.ctrlKey) ? 'eraser' : _sel();
-    const bsz  = _bsz();
-    const cells = [];
+    const elem = (e.button === 2 || e.ctrlKey) ? 'eraser' : (window.PW?.Input?.selected ?? 'sand');
+    const r    = window.PW?.Input?.brushSize ?? 3;
 
-    for (let dy = -bsz; dy <= bsz; dy++) for (let dx = -bsz; dx <= bsz; dx++) {
-      if (dx*dx + dy*dy > bsz*bsz) continue;
-      if (_inB(cx+dx, cy+dy)) cells.push({ x: cx+dx, y: cy+dy, e: elem });
-    }
-
-    if (_isHost) {
-      // Host applies directly to the simulation
-      cells.forEach(a => { if (a.e === 'eraser') _gclear(a.x,a.y); else _gset(a.x,a.y,a.e); });
-    } else {
-      // Client sends to host via Firebase
-      cells.forEach(a => _queueAct(a.x, a.y, a.e));
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx*dx + dy*dy > r*r) continue;
+        const bx = cx+dx, by = cy+dy;
+        if (!G.inB(bx, by)) continue;
+        if (isHost) {
+          // Host applies directly — this IS the simulation grid
+          if (elem === 'eraser') G.clear(bx, by);
+          else G.set(bx, by, elem);
+        } else {
+          // Client queues → host applies → diff broadcasts back to everyone
+          queueAction(bx, by, elem);
+        }
+      }
     }
   }
 
-  gc.addEventListener('mousemove', onDraw);
   gc.addEventListener('mousedown', onDraw);
+  gc.addEventListener('mousemove', onDraw);
 }
 
 // ── WATCH ROOM ────────────────────────────────────────────────────
-function _watchRoom() {
-  _on(`rooms/${_room}/players`, 'value', snap => {
+function watchRoom() {
+  const playersRef = ref(db, `rooms/${roomCode}/players`);
+  onValue(playersRef, snap => {
     const data = snap.val() || {};
     Object.values(data).forEach(p => {
-      if (!_players[p.id]) _players[p.id] = {};
-      if (p.id !== _myId) Object.assign(_players[p.id], p);
-      else Object.assign(_players[p.id], { id: p.id, color: p.color, name: p.name });
+      if (!players[p.id]) players[p.id] = {};
+      if (p.id !== myId) Object.assign(players[p.id], p);
+      else Object.assign(players[p.id], { id: p.id, color: p.color, name: p.name });
     });
-    Object.keys(_players).forEach(id => { if (!data[id]) delete _players[id]; });
-    _updateList();
-    const n = Object.keys(_players).length;
-    _status(_isHost
-      ? `● Hosting — ${n} player${n!==1?'s':''}`
-      : `● Room ${_room} — ${n} player${n!==1?'s':''}`,
-      '#44ff88');
+    Object.keys(players).forEach(id => { if (!data[id]) delete players[id]; });
+    updatePlayerList();
+    const n = Object.keys(players).length;
+    setStatus(
+      isHost ? `● Hosting — ${n} player${n!==1?'s':''}` : `● Room ${roomCode} — ${n} player${n!==1?'s':''}`,
+      '#44ff88'
+    );
   });
+  _unsubs.push(() => off(playersRef));
 
-  _on(`rooms/${_room}/host`, 'value', snap => {
-    if (!snap.exists() && !_isHost && _connected) {
-      _status('Host left the room', '#ff4444');
+  // Host disconnect detection
+  const hostRef = ref(db, `rooms/${roomCode}/host`);
+  onValue(hostRef, snap => {
+    if (!snap.exists() && !isHost) {
+      setStatus('Host left the room', '#ff4444');
       setTimeout(mpDisconnect, 1500);
     }
+  });
+  _unsubs.push(() => off(hostRef));
+}
+
+// ── WORLD SERIALIZE / DESERIALIZE ────────────────────────────────
+function serializeWorld() {
+  const W = G.cols(), H = G.rows(), out = [];
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const t = G.get(x, y);
+      if (t && t !== 'empty') out.push(y * W + x, t);
+    }
+  return out;
+}
+
+function deserializeWorld(data) {
+  G.clearAll();
+  const W = G.cols();
+  (Array.isArray(data) ? data : []).forEach((v, i, arr) => {
+    if (i % 2 !== 0) return;
+    const x = v % W, y = Math.floor(v / W);
+    if (G.inB(x, y) && arr[i+1]) G.set(x, y, arr[i+1]);
   });
 }
 
 // ── HOST ──────────────────────────────────────────────────────────
 async function mpHost() {
-  if (!_dbInit()) { _status('✗ Firebase unavailable', '#ff4444'); return; }
-  if (_connected)  { mpDisconnect(); return; }
+  if (!firebaseReady) { await _waitReady(); }
+  if (window._mpConnected) { mpDisconnect(); return; }
 
-  _room    = _rand4();
-  _myId    = _uid();
-  _myColor = MP_COLORS[0];
-  _myName  = 'Host';
-  _isHost  = true;
+  isHost    = true;
+  roomCode  = _randRoom();
+  myColor   = MP_COLORS[0];
+  players[myId] = { id: myId, name: 'Host', color: myColor, cx: null, cy: null };
 
-  _status('Creating room...', '#ffcc44');
+  setStatus('Creating room...', '#ffcc44');
 
   try {
-    const ex = await _get(`rooms/${_room}/host`);
-    if (ex.exists()) _room = _rand4();
+    const existing = await get(ref(db, `rooms/${roomCode}/host`));
+    if (existing.exists()) roomCode = _randRoom();
 
-    await _set(`rooms/${_room}/host`, _myId);
-    await _set(`rooms/${_room}/players/${_myId}`, { id: _myId, color: _myColor, name: _myName, cx: null, cy: null });
-    _r(`rooms/${_room}/host`).onDisconnect().remove();
-    _r(`rooms/${_room}/players/${_myId}`).onDisconnect().remove();
-    await _set(`rooms/${_room}/world`, _serialize());
+    await set(ref(db, `rooms/${roomCode}/host`), myId);
+    await set(ref(db, `rooms/${roomCode}/players/${myId}`), players[myId]);
+    onDisconnect(ref(db, `rooms/${roomCode}/host`)).remove();
+    onDisconnect(ref(db, `rooms/${roomCode}/players/${myId}`)).remove();
 
-    _players[_myId] = { id: _myId, color: _myColor, name: _myName };
-    _connected = true;
+    // Push current world so joining players see current state
+    await set(ref(db, `rooms/${roomCode}/world`), serializeWorld());
 
-    // HOST keeps simulation running — it's the authority
+    window._mpConnected = true;
+
+    // HOST keeps simulation running — it is the only physics brain
     if (window.PW?.Simulation && !PW.Simulation.running) PW.Simulation.start();
 
-    _watchRoom();
-    _watchActions();
-    _startDiffs();
-    _hookDraw();
-    _initCursors();
-    _startCursors();
-    _showConnected();
-    _status(`● Hosting — Room: ${_room}`, '#44ff88');
+    watchRoom();
+    watchClientActions();
+    startDiffBroadcast();
+    hookDraw();
+    initCursorOverlay();
+    startCursorBroadcast();
+    showConnected();
+    setStatus(`● Hosting — Room: ${roomCode}`, '#44ff88');
+    if (window.unlockAch) unlockAch('first_multiplayer');
+    console.log("[MP] Hosting room:", roomCode);
 
   } catch(e) {
-    console.error('[MP] Host error:', e);
-    _status('✗ Failed to create room', '#ff4444');
+    console.error("[MP] Host error:", e);
+    setStatus('✗ Failed to create room', '#ff4444');
+    isHost = false;
   }
 }
 
 // ── JOIN ──────────────────────────────────────────────────────────
 async function mpJoin(code) {
-  if (!_dbInit()) { _status('✗ Firebase unavailable', '#ff4444'); return; }
-  if (_connected)  { mpDisconnect(); return; }
+  if (!firebaseReady) { await _waitReady(); }
+  if (window._mpConnected) { mpDisconnect(); return; }
 
   code = (code || '').trim().toUpperCase();
   const errEl = document.getElementById('mpJoinErr');
   if (code.length !== 4) { if (errEl) errEl.textContent = 'Enter a 4-letter code.'; return; }
   if (errEl) errEl.textContent = '';
 
-  _status(`Connecting to ${code}...`, '#ffcc44');
+  setStatus(`Connecting to ${code}...`, '#ffcc44');
 
   try {
-    const hostSnap = await _get(`rooms/${code}/host`);
+    const hostSnap = await get(ref(db, `rooms/${code}/host`));
     if (!hostSnap.exists()) {
       if (errEl) errEl.textContent = 'Room not found or host left.';
-      _status('✗ Room not found', '#ff4444');
+      setStatus('✗ Room not found', '#ff4444');
       return;
     }
 
-    _room   = code;
-    _myId   = _uid();
-    _isHost = false;
+    roomCode = code;
+    isHost   = false;
 
-    const pSnap      = await _get(`rooms/${code}/players`);
+    const pSnap      = await get(ref(db, `rooms/${code}/players`));
     const usedColors = pSnap.exists() ? Object.values(pSnap.val()).map(p => p.color) : [];
     const idx        = Object.keys(pSnap.val() || {}).length + 1;
-    _myColor = MP_COLORS.find(c => !usedColors.includes(c)) || MP_COLORS[idx % MP_COLORS.length];
-    _myName  = 'P' + idx;
+    myColor = MP_COLORS.find(c => !usedColors.includes(c)) || MP_COLORS[idx % MP_COLORS.length];
 
-    await _set(`rooms/${code}/players/${_myId}`, { id: _myId, color: _myColor, name: _myName, cx: null, cy: null });
-    _r(`rooms/${code}/players/${_myId}`).onDisconnect().remove();
+    await set(ref(db, `rooms/${code}/players/${myId}`), {
+      id: myId, name: 'P' + idx, color: myColor, cx: null, cy: null,
+    });
+    onDisconnect(ref(db, `rooms/${code}/players/${myId}`)).remove();
 
-    const wSnap = await _get(`rooms/${code}/world`);
-    if (wSnap.exists()) _deserialize(wSnap.val());
+    players[myId] = { id: myId, name: 'P' + idx, color: myColor };
 
-    _players[_myId] = { id: _myId, color: _myColor, name: _myName };
-    _connected = true;
+    // Load host's current world
+    const wSnap = await get(ref(db, `rooms/${code}/world`));
+    if (wSnap.exists()) deserializeWorld(wSnap.val());
 
-    // CLIENT pauses simulation — host is god
+    window._mpConnected = true;
+
+    // CLIENT pauses its simulation — host is the only physics brain
     if (window.PW?.Simulation) PW.Simulation.pause();
 
-    _watchRoom();
-    _watchDiffs();
-    _hookDraw();
-    _initCursors();
-    _startCursors();
-    _showConnected();
-    _status(`● In room ${_room}`, '#44ff88');
+    watchRoom();
+    watchHostDiffs();        // CLIENT receives diffs from host
+    hookDraw();
+    initCursorOverlay();
+    startCursorBroadcast();
+    showConnected();
+    setStatus(`● In room ${roomCode}`, '#44ff88');
+    if (window.unlockAch) unlockAch('first_multiplayer');
+    console.log("[MP] Joined room:", roomCode);
 
   } catch(e) {
-    console.error('[MP] Join error:', e);
-    _status('✗ Failed to join', '#ff4444');
+    console.error("[MP] Join error:", e);
+    setStatus('✗ Failed to join', '#ff4444');
   }
 }
 
 // ── DISCONNECT ────────────────────────────────────────────────────
 async function mpDisconnect() {
-  _connected = false;
-  _stopDiffs();
-  _stopCursors();
-  _offAll();
-  _destroyCursors();
+  window._mpConnected = false;
+  stopCursorBroadcast();
+  destroyCursorOverlay();
+  if (diffTimer) { clearInterval(diffTimer); diffTimer = null; }
+  _unsubs.forEach(fn => fn());
+  _unsubs = [];
 
-  if (_db) {
-    try {
-      if (_isHost) await _rm(`rooms/${_room}`);
-      else         await _rm(`rooms/${_room}/players/${_myId}`);
-    } catch(e) {}
-  }
+  try {
+    if (isHost) await remove(ref(db, `rooms/${roomCode}`));
+    else        await remove(ref(db, `rooms/${roomCode}/players/${myId}`));
+  } catch(e) {}
 
-  if (!_isHost && window.PW?.Simulation) PW.Simulation.resume();
+  // Resume local simulation if client
+  if (!isHost && window.PW?.Simulation) PW.Simulation.resume();
 
-  _players    = {};
-  _drawHooked = false;
-  _lastDraw   = { x: -1, y: -1 };
-  _pendingActs = [];
-  _prevSnap    = null;
-  _room = _myId = _myColor = _myName = '';
-  _isHost = false;
+  players        = {};
+  pendingActions = [];
+  prevSnapshot   = null;
+  drawHooked     = false;
+  lastPos        = { x: -1, y: -1 };
+  roomCode       = '';
+  isHost         = false;
 
-  _showDisconnected();
-  _status('● Not connected', '#333');
+  showDisconnected();
+  setStatus('● Not connected', '#333');
 }
 
 // ── UI ────────────────────────────────────────────────────────────
-function _status(msg, col = '#555') {
+function setStatus(msg, col = '#555') {
   const el = document.getElementById('mpStatus');
   if (el) { el.textContent = msg; el.style.color = col; }
 }
 
-function _showConnected() {
+function showConnected() {
   document.getElementById('mpSetup')?.style.setProperty('display', 'none');
   document.getElementById('mpConnected')?.style.setProperty('display', 'block');
   const rd = document.getElementById('mpRoomDisplay');
-  if (rd) rd.textContent = _room;
+  if (rd) rd.textContent = roomCode;
   const mb = document.getElementById('bMulti');
-  if (mb) { mb.style.color = _myColor; mb.textContent = '🌐 ' + _room; }
+  if (mb) { mb.style.color = myColor; mb.textContent = '🌐 ' + roomCode; }
   const badge = document.getElementById('mpRoleBadge');
-  if (badge) { badge.textContent = _isHost ? '👑 HOST' : '🎮 CLIENT'; badge.style.color = _isHost ? '#ffcc44' : '#4ac8ff'; }
+  if (badge) {
+    badge.textContent = isHost ? '👑 HOST' : '🎮 CLIENT';
+    badge.style.color = isHost ? '#ffcc44' : '#4ac8ff';
+  }
+  const authEl = document.getElementById('mpAuthStatus');
+  if (authEl) authEl.textContent = '🔐 Signed in anonymously';
 }
 
-function _showDisconnected() {
+function showDisconnected() {
   document.getElementById('mpSetup')?.style.setProperty('display', 'block');
   document.getElementById('mpConnected')?.style.setProperty('display', 'none');
   const mb = document.getElementById('bMulti');
   if (mb) { mb.style.color = '#4ac8ff'; mb.textContent = '🌐 MULTI'; }
 }
 
-function _updateList() {
+function updatePlayerList() {
   const el = document.getElementById('mpPlayerList');
   if (!el) return;
   el.innerHTML = '';
-  Object.values(_players).forEach(p => {
+  Object.values(players).forEach(p => {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:8px;font-family:"DM Mono",monospace;font-size:.62rem;margin-bottom:5px;';
-    const me  = p.id === _myId;
-    const host = _isHost && me;
+    const me   = p.id === myId;
+    const host = isHost && me;
     row.innerHTML = `
       <div style="width:9px;height:9px;border-radius:50%;background:${p.color};flex-shrink:0;box-shadow:0 0 6px ${p.color};"></div>
-      <span style="color:#888;">${p.name||p.id.slice(0,8)}</span>
-      ${me   ? '<span style="color:#444;font-size:.5rem;">(you)</span>'   : ''}
+      <span style="color:#888;">${p.name || p.id.slice(0,8)}</span>
+      ${me   ? '<span style="color:#444;font-size:.5rem;">(you)</span>'      : ''}
       ${host ? '<span style="color:#ffcc44;font-size:.5rem;">👑 host</span>' : ''}
     `;
     el.appendChild(row);
@@ -518,22 +533,18 @@ function _updateList() {
 }
 
 function mpCopyCode() {
-  navigator.clipboard?.writeText(_room).catch(() => {});
+  navigator.clipboard?.writeText(roomCode).catch(() => {});
   const btn = document.querySelector('[onclick="mpCopyCode()"]');
   if (btn) { btn.textContent = 'copied!'; setTimeout(() => btn.textContent = 'copy', 1500); }
 }
 
-// ── UTILS ─────────────────────────────────────────────────────────
-function _uid()   { return Math.random().toString(36).slice(2, 10); }
-function _rand4() { return Array.from({length:4}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[0|Math.random()*32]).join(''); }
-
-// ── WIRE ──────────────────────────────────────────────────────────
+// ── WIRE BUTTONS ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('bMulti')?.addEventListener('click', () =>
     document.getElementById('panMulti')?.classList.add('open'));
   document.getElementById('mpHostBtn')?.addEventListener('click', mpHost);
   document.getElementById('mpJoinBtn')?.addEventListener('click', () =>
-    mpJoin(document.getElementById('mpJoinCode')?.value));
+    mpJoin(document.getElementById('mpJoinCode')?.value || ''));
   document.getElementById('mpJoinCode')?.addEventListener('keydown', e => {
     e.target.value = e.target.value.toUpperCase();
     if (e.key === 'Enter') mpJoin(e.target.value);
@@ -544,6 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('mpLeaveBtn')?.addEventListener('click', mpDisconnect);
 });
 
+// ── EXPOSE TO WINDOW ──────────────────────────────────────────────
 window.mpHost       = mpHost;
 window.mpJoin       = mpJoin;
 window.mpDisconnect = mpDisconnect;
