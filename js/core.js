@@ -1,5 +1,5 @@
 /**
- * PARTICLE WORLD v2.0 — core.js
+ * PARTICLE WORLD v1.3 Beta — core.js
  * Grid, renderer, game loop, element registry.
  * No element logic lives here — elements register themselves via ElementRegistry.
  */
@@ -575,7 +575,8 @@ const Simulation = (() => {
       _fps = _fpsCount;
       _fpsCount = 0;
       _fpsTimer -= 1000;
-      document.getElementById('statFps').textContent = _fps + ' fps';
+      const fpsel = document.getElementById('statFps') || document.getElementById('sF');
+      if (fpsel) fpsel.textContent = _fps;
     }
 
     if (_running) {
@@ -592,7 +593,8 @@ const Simulation = (() => {
 
     // Particle count (every 30 frames)
     if (_frame % 30 === 0) {
-      document.getElementById('statParts').textContent = Grid.countNonEmpty() + ' cells';
+      const pesel = document.getElementById('statParts') || document.getElementById('sP');
+      if (pesel) pesel.textContent = Grid.countNonEmpty();
     }
   }
 
@@ -701,7 +703,7 @@ const Input = (() => {
 // ══════════════════════════════════════════════════════════════════
 window.PW = {
   Grid, Renderer, Simulation, Input, Helpers, ElementRegistry,
-  version: '2.0.0',
+  version: '1.3.0',
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -734,7 +736,7 @@ function initGame() {
   Input.init(canvas, CELL_SIZE);
   Simulation.start();
 
-  console.log(`Particle World v2.0 — ${ElementRegistry.count()} elements loaded`);
+  console.log(`Particle World v1.3 Beta — ${ElementRegistry.count()} elements loaded`);
 }
 
 // ══════════════════════════════════════════════════════════════════
