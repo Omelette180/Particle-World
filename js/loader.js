@@ -249,15 +249,14 @@ document.getElementById('mSettings').onclick=()=>window.showPanel&&window.showPa
 document.getElementById('mCredits').onclick=()=>window.showPanel&&window.showPanel('panCredits');
 document.getElementById('mLog').onclick=()=>window.showPanel&&window.showPanel('panLog');
 document.getElementById('mMods').onclick=()=>{window.showPanel&&window.showPanel('panMods');};
-document.getElementById('mAccount')&&(document.getElementById('mAccount').onclick=()=>window.showPanel&&window.showPanel('panAcct'));
+document.getElementById('mAccount')&&(document.getElementById('mAccount').onclick=()=>window.showPanel&&window.showPanel('panAccount'));
 document.getElementById('mWorlds')&&(document.getElementById('mWorlds').onclick=startGame);
 document.getElementById('closeSet')?.addEventListener('click',()=>{window.closePanels&&window.closePanels();});
 document.getElementById('setSpd').oninput=e=>document.getElementById('setSpdV').textContent=e.target.value+'x';
 const THEMES_LIST=['t-light','t-neon','t-warm','t-forest','t-mono'];
-document.querySelectorAll('#panSet .tt').forEach(b=>b.onclick=()=>{
-  THEMES_LIST.forEach(t=>document.body.classList.remove(t));
-  if(b.dataset.t)document.body.classList.add(b.dataset.t);
-  document.querySelectorAll('#panSet .tt').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+// Theme switching handled by ui.js setTheme()
+document.querySelectorAll('.set-theme').forEach(b=>b.onclick=()=>{
+  if(window.setTheme)setTheme(b.dataset.theme||'');
 });
 let perfMode=false;
 function applySettings(){
