@@ -230,14 +230,28 @@ initL();animMode0();fakeLoad();
 
 // ─── MENU ───
 let glowOn=true,shakeOn=true;
+
+// startGame: fade out loader and let ui.js initGame() take over (v2 arch)
+function startGame(){
+  const loader=document.getElementById('loader');
+  if(loader){loader.classList.add('fade');setTimeout(()=>loader.style.display='none',950);}
+  const game=document.getElementById('game');
+  if(game)game.classList.add('show');
+  // initGame is called by ui.js DOMContentLoaded — just ensure simulation is running
+  if(window.PW&&window.PW.Simulation&&!window.PW.Simulation.running)window.PW.Simulation.start();
+}
+
 document.getElementById('mPlay').onclick=startGame;
 document.getElementById('mSandbox').onclick=startGame;
-document.getElementById('mTutorial').onclick=()=>document.getElementById('panTut').classList.add('open');
-document.getElementById('mSettings').onclick=()=>document.getElementById('panSet').classList.add('open');
-document.getElementById('mCredits').onclick=()=>document.getElementById('panCred').classList.add('open');
-document.getElementById('mLog').onclick=()=>document.getElementById('panLog').classList.add('open');
-document.getElementById('mMods').onclick=()=>{document.getElementById('panMod').classList.add('open');modRenderLibrary&&modRenderLibrary();};
-document.getElementById('closeSet').onclick=()=>{applySettings();document.getElementById('panSet').classList.remove('open');};
+// Fix panel IDs to match what ui.js actually builds
+document.getElementById('mTutorial').onclick=()=>document.getElementById('panTut')?.classList.add('open');
+document.getElementById('mSettings').onclick=()=>window.showPanel&&window.showPanel('panSettings');
+document.getElementById('mCredits').onclick=()=>window.showPanel&&window.showPanel('panCredits');
+document.getElementById('mLog').onclick=()=>window.showPanel&&window.showPanel('panLog');
+document.getElementById('mMods').onclick=()=>{window.showPanel&&window.showPanel('panMods');};
+document.getElementById('mAccount')&&(document.getElementById('mAccount').onclick=()=>window.showPanel&&window.showPanel('panAcct'));
+document.getElementById('mWorlds')&&(document.getElementById('mWorlds').onclick=startGame);
+document.getElementById('closeSet')?.addEventListener('click',()=>{window.closePanels&&window.closePanels();});
 document.getElementById('setSpd').oninput=e=>document.getElementById('setSpdV').textContent=e.target.value+'x';
 const THEMES_LIST=['t-light','t-neon','t-warm','t-forest','t-mono'];
 document.querySelectorAll('#panSet .tt').forEach(b=>b.onclick=()=>{
@@ -247,19 +261,37 @@ document.querySelectorAll('#panSet .tt').forEach(b=>b.onclick=()=>{
 });
 let perfMode=false;
 function applySettings(){
-  CELL=+document.getElementById('setQ').value;
-  simSpeed=+document.getElementById('setSpd').value;
-  document.getElementById('spR').value=simSpeed;
-  document.getElementById('spV').textContent=simSpeed+'x';
-  document.getElementById('spdbadge').textContent=simSpeed+'x';
-  glowOn=!!+document.getElementById('setGlow').value;
-  shakeOn=!!+document.getElementById('setShake').value;
-  perfMode=!!+document.getElementById('setPerfMode').value;
-  if(perfMode){glowOn=false;shakeOn=false;document.getElementById('setGlow').value='0';document.getElementById('setShake').value='0';}
-  const lm=document.getElementById('setLayout').value;
-  localStorage.setItem('pw_layout',lm);
-  setLayoutMode(lm);
-  if(ta)resize();
+  // Cell size stored in localStorage — applied on next load
+  const cellSizeEl=document.getElementById('setQ');
+  if(cellSizeEl) localStorage.setItem('pw_cellSize', cellSizeEl.value);
+
+  // Sim speed — v2 PW.Simulation API
+  const spdEl=document.getElementById('setSpd');
+  if(spdEl){
+    const spd=+spdEl.value;
+    if(window.PW&&window.PW.Simulation) PW.Simulation.setSpeed(spd);
+    const spR=document.getElementById('spR'); if(spR) spR.value=spd;
+    const spV=document.getElementById('spV'); if(spV) spV.textContent=spd+'x';
+    const badge=document.getElementById('spdbadge'); if(badge) badge.textContent=spd+'x';
+  }
+
+  glowOn=!!(+(document.getElementById('setGlow')?.value||1));
+  shakeOn=!!(+(document.getElementById('setShake')?.value||1));
+  window._shakeEnabled=shakeOn;
+
+  perfMode=!!(+(document.getElementById('setPerfMode')?.value||0));
+  if(perfMode){
+    glowOn=false; shakeOn=false; window._shakeEnabled=false;
+    const g=document.getElementById('setGlow');  if(g) g.value='0';
+    const s=document.getElementById('setShake'); if(s) s.value='0';
+  }
+
+  const lmEl=document.getElementById('setLayout');
+  if(lmEl){
+    const lm=lmEl.value;
+    localStorage.setItem('pw_layout',lm);
+    setLayoutMode(lm);
+  }
 }
 
 // ── PRO LAYOUT ENGINE ──────────────────────────────────────────────
@@ -308,19 +340,17 @@ function buildProDock(){
     cat.elems.forEach(name=>{
       const info=ELEM_REGISTRY[name];
       if(!info&&!E[name])return; // skip unknowns
-      const color=info?.color||gcol(name)||'#444';
+      const color=info?.color||'#444';
       const label=info?.label||name.replace(/_/g,' ');
       const btn=document.createElement('button');
-      btn.className='peb'+(sel===name?' sel':'');
+      const curSel=window.PW?.Input?.selected||'sand';
+      btn.className='peb'+(curSel===name?' sel':'');
       btn.dataset.e=name;
       btn.innerHTML=`<div class="pdot" style="background:${color}"></div><span>${label}</span>`;
       btn.onclick=()=>{
-        sel=name;
-        document.getElementById('proSelName').textContent=name;
-        // sync classic sidebar selection
-        document.querySelectorAll('.eb.sel').forEach(b=>b.classList.remove('sel'));
-        const cls=document.querySelector(`.eb[data-e="${name}"]`);
-        if(cls)cls.classList.add('sel');
+        if(window.PW&&window.PW.Input) PW.Input.setElement(name);
+        document.getElementById('proSelName')&&(document.getElementById('proSelName').textContent=name);
+        document.querySelectorAll('.eb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name||b.dataset.id===name));
         elemRow.querySelectorAll('.peb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name));
       };
       elemRow.appendChild(btn);
@@ -353,13 +383,13 @@ function buildProDock(){
         seen.add(name);
         const info=ELEM_REGISTRY[name];
         if(!info&&!E[name])return;
-        const color=info?.color||gcol(name)||'#444';
+        const color=info?.color||'#444';
         const label=info?.label||name.replace(/_/g,' ');
         const btn=document.createElement('button');
         btn.className='peb'+(sel===name?' sel':'');
         btn.dataset.e=name;
         btn.innerHTML=`<div class="pdot" style="background:${color}"></div><span>${label}</span>`;
-        btn.onclick=()=>{sel=name;document.getElementById('proSelName').textContent=name;elemRow.querySelectorAll('.peb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name));};
+        btn.onclick=()=>{if(window.PW&&window.PW.Input)PW.Input.setElement(name);document.getElementById('proSelName')&&(document.getElementById('proSelName').textContent=name);elemRow.querySelectorAll('.peb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name));document.querySelectorAll('.eb').forEach(b=>b.classList.toggle('sel',b.dataset.e===name||b.dataset.id===name));};
         elemRow.appendChild(btn);
       });
     });
@@ -368,20 +398,30 @@ function buildProDock(){
   // Pro brush slider
   const proBR=document.getElementById('proBrushR');
   const proBV=document.getElementById('proBrushV');
-  proBR.addEventListener('input',()=>{bsz=+proBR.value;proBV.textContent=bsz;document.getElementById('bR').value=bsz;document.getElementById('bV').textContent=bsz;});
+  proBR.addEventListener('input',()=>{const v=+proBR.value;if(window.PW&&window.PW.Input)PW.Input.setBrush(v);if(proBV)proBV.textContent=v;const bR=document.getElementById('bR');if(bR)bR.value=v;const bV=document.getElementById('bV');if(bV)bV.textContent=v;});
 
   // Pro speed slider
   const proSR=document.getElementById('proSpeedR');
   const proSV=document.getElementById('proSpeedV');
-  proSR.addEventListener('input',()=>{simSpeed=+proSR.value;proSV.textContent=simSpeed+'x';document.getElementById('spR').value=simSpeed;document.getElementById('spV').textContent=simSpeed+'x';document.getElementById('spdbadge').textContent=simSpeed+'x';});
+  proSR.addEventListener('input',()=>{const v=+proSR.value;if(window.PW&&window.PW.Simulation)PW.Simulation.setSpeed(v);if(proSV)proSV.textContent=v+'x';const spR=document.getElementById('spR');if(spR)spR.value=v;const spV=document.getElementById('spV');if(spV)spV.textContent=v+'x';const badge=document.getElementById('spdbadge');if(badge)badge.textContent=v+'x';});
 }
 
 // ELEM_REGISTRY: lightweight name→{color,label} for the dock
 // Populated from the existing .eb buttons in the classic sidebar
 function buildElemRegistry(){
   window.ELEM_REGISTRY={};
-  document.querySelectorAll('#ss .eb[data-e]').forEach(btn=>{
-    const name=btn.dataset.e;
+  // v2: read from PW.ElementRegistry if available
+  if(window.PW&&window.PW.ElementRegistry){
+    PW.ElementRegistry.allArray().forEach(def=>{
+      const color=typeof def.color==='string'?def.color:'#888';
+      ELEM_REGISTRY[def.id]={color,label:def.name};
+    });
+    return;
+  }
+  // fallback: scrape sidebar buttons (supports both data-id and data-e)
+  document.querySelectorAll('#ss .eb').forEach(btn=>{
+    const name=btn.dataset.id||btn.dataset.e;
+    if(!name)return;
     const dot=btn.querySelector('.dot');
     const color=dot?dot.style.background:'#888';
     const rawLabel=btn.textContent.trim().replace(/[A-Z]$/,'').trim();
@@ -448,15 +488,7 @@ setTimeout(()=>{
   document.getElementById('setLayout').value=saved;
   setLayoutMode(saved);
 },800);
-function startGame(){
-  const loader=document.getElementById('loader');
-  loader.classList.add('fade');
-  setTimeout(()=>loader.style.display='none',950);
-  document.getElementById('game').classList.add('show');
-  _buildGlowData();
-  resize();
-  requestAnimationFrame(loop);
-}
+// startGame() defined above near menu wiring
 
 // ── CONNECT LOADER TO GAME PROGRESS ──────────────────────────────
 // Replace the fake load — ui.js calls this to update real progress
