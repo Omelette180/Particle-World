@@ -1,5 +1,5 @@
 /**
- * PARTICLE WORLD v2.0 — js/physics.js
+ * PARTICLE WORLD v1.3 Beta — js/physics.js
  * Enhanced physics engine — best of Sandboxels merged into PW architecture.
  *
  * Sandboxels features added:
