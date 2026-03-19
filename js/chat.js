@@ -86,12 +86,10 @@
   }
 
   function initChatListeners(){
-    if(chatInited||!window._fbReady||!window._fbImports)return;
+    if(chatInited||!window._fbReady||!window._fbDb)return;
     chatInited=true;
-    const {ref:fbRef,onChildAdded:fbOnChild,query:fbQuery,limitToLast:fbLTL}=window._fbImports;
-    const chatRef=fbRef(window._fbDb,'globalChat');
-    const recent=fbQuery(chatRef,fbLTL(50));
-    fbOnChild(recent,snap=>{
+    const chatRef=window._fbDb.ref('globalChat');
+    chatRef.limitToLast(50).on('child_added',snap=>{
       const m=snap.val();
       if(m&&m.name&&m.text)appendMsg(m.name,m.text,nameColor(m.name),m.ts);
     });
@@ -105,10 +103,9 @@
     if(window._lastChatTs&&now-window._lastChatTs<800)return;
     window._lastChatTs=now;
 
-    if(window._fbReady&&window._fbImports){
+    if(window._fbReady&&window._fbDb){
       try{
-        const {ref:fbRef,push:fbPush}=window._fbImports;
-        await fbPush(fbRef(window._fbDb,'globalChat'),{name,text,ts:now});
+        await window._fbDb.ref('globalChat').push({name,text,ts:now});
       }catch(e){appendMsg(name,text,nameColor(name),now);}
     }else{
       appendMsg(name,text,nameColor(name),now);
@@ -120,7 +117,7 @@
 
   // Keep trying to init chat until Firebase is ready (Firebase module loads async)
   function tryInitChat(){
-    if(window._fbReady&&window._fbImports){
+    if(window._fbReady&&window._fbDb){
       initChatListeners();
       appendMsg('🌍 System','Welcome to Particle World! Chat is global 🔥','#444',null);
     }else{
@@ -129,6 +126,3 @@
   }
   setTimeout(tryInitChat,1500);
 })();
-</script>
-
-</html>
