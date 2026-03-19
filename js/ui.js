@@ -1,5 +1,5 @@
 /**
- * PARTICLE WORLD v1.3 Beta — js/ui.js
+ * PARTICLE WORLD v1.4 Beta — js/ui.js
  * FIXED: All element IDs now match index.html exactly.
  * Bugs fixed:
  *  - btnPause→bPause, btnClear→bClear, btnGrid→bGrid, btnHeat→bHeat,
@@ -343,7 +343,7 @@ function buildPanels() {
   <div class="opanel" id="panMenu">
     <div class="opbox" style="max-width:400px;text-align:center;">
       <div class="pw-logo" style="font-size:2rem;margin-bottom:.5rem;">P<span style="color:#a855f7">W</span></div>
-      <div class="beta-pill" style="margin-bottom:1.5rem;">v1.3.0 Beta</div>
+      <div class="beta-pill" style="margin-bottom:1.5rem;">v1.4.0 Beta</div>
       <button class="menu-btn primary" onclick="closePanels()">▶ Continue</button>
       <button class="menu-btn" onclick="showPanel('panSettings')">⚙ Settings</button>
       <button class="menu-btn" onclick="showPanel('panLog')">📋 Update Log</button>
@@ -359,7 +359,7 @@ function buildPanels() {
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#0d0d1a,#130d1f);padding:1.4rem 1.8rem 1rem;border-bottom:1px solid #1a1a2a;">
         <div style="font-family:'Syne',sans-serif;font-size:1rem;color:#a855f7;letter-spacing:.08em;font-weight:700;">⚙ SETTINGS</div>
-        <div style="font-size:.5rem;color:#333;letter-spacing:.15em;margin-top:2px;">PARTICLE WORLD v1.3 Beta</div>
+        <div style="font-size:.5rem;color:#333;letter-spacing:.15em;margin-top:2px;">PARTICLE WORLD v1.4 Beta</div>
       </div>
 
       <!-- Tabs -->
@@ -620,81 +620,136 @@ function buildPanels() {
     <div class="opbox">
       <h2>📋 Update Log</h2>
 
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- v1.4 BETA — BIG UPDATE                           -->
+      <!-- ══════════════════════════════════════════════════ -->
       <div class="log-entry current">
-        <div class="log-ver">v1.3.0 — Beta 🔧</div>
+        <div class="log-ver" style="font-size:.95rem;">v1.4.0 — Beta 🚀 <span style="font-size:.55rem;color:#444;font-family:'DM Mono',monospace;">BIG UPDATE</span></div>
         <div class="log-date">March 2026</div>
 
-        <div style="font-size:.52rem;color:#a855f7;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔧 BUG FIXES</div>
-        <div class="log-item change">BUG FIX — Elements now appear in sidebar correctly (data-e / data-id mismatch fixed)</div>
-        <div class="log-item change">BUG FIX — Admin panel opens with code "omariscool" (all DOM queries deferred to DOMContentLoaded)</div>
-        <div class="log-item change">BUG FIX — Toolbar buttons now work (ID mismatches: bPause, bClear, bGrid etc all fixed)</div>
-        <div class="log-item change">BUG FIX — FPS and particle counters now update correctly</div>
-        <div class="log-item change">BUG FIX — Brush size and sim speed sliders now function</div>
-        <div class="log-item change">BUG FIX — applySettings() no longer crashes (v1 globals CELL, simSpeed, bsz, ta replaced with v2 PW API)</div>
-        <div class="log-item change">BUG FIX — loader.js startGame() no longer calls undefined loop() and resize()</div>
-        <div class="log-item change">BUG FIX — Menu panel buttons now open correct panels (panSet→panSettings, panCred→panCredits etc)</div>
-        <div class="log-item change">BUG FIX — Pro dock element buttons now use PW.Input.setElement() instead of broken v1 sel= variable</div>
+        <!-- OVERVIEW -->
+        <div style="background:#0a0518;border:1px solid #2a0a4a;border-radius:4px;padding:10px 12px;margin:10px 0;font-size:.56rem;color:#888;line-height:1.9;">
+          The biggest update to Particle World since the original release.<br>
+          Complete engine rewrite, 293 elements, host-authority multiplayer,<br>
+          rebuilt settings, full bug pass, and Firebase v9 upgrade.
+        </div>
 
-        <div style="font-size:.52rem;color:#ff8800;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚡ PHYSICS ENGINE</div>
-        <div class="log-item">Sandboxels-inspired physics — proper no-noclip powder movement, random side-first diagonal</div>
-        <div class="log-item">LIQUID() supports viscosity — honey (0.08) vs water (1.0) vs superfluid (1.0 + wall climbing)</div>
-        <div class="log-item">GAS() uses 8-direction shuffled spread every tick — no more directional bias</div>
-        <div class="log-item">FIRE() counts down energy and turns to smoke naturally</div>
-        <div class="log-item">MOLTEN() emits fire upward at 2.5% per tick — same rate as Sandboxels</div>
-        <div class="log-item">Reaction system — Reactions.add('sand', { water: { elem1:'wet_sand', chance:0.02 } })</div>
-        <div class="log-item">Chain-reaction explode() — TNT triggers TNT, gas explodes, uranium goes critical</div>
-        <div class="log-item">Heat conductivity per element — copper at 0.95, rubber at 0.01, vacuum at 0</div>
-        <div class="log-item">Burning system — burnTime/burnInto per element, fire spreads to neighbors via burnAt</div>
-        <div class="log-item">Screen shake on explosions via window._shakeEnabled</div>
+        <!-- BUG FIXES -->
+        <div style="font-size:.52rem;color:#ff4444;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔧 BUG FIXES — 20+ FIXED</div>
+        <div class="log-item change">Elements not appearing in sidebar — data-e / data-id mismatch fixed across all toolbar buttons</div>
+        <div class="log-item change">Admin panel not opening with code "omariscool" — all DOM queries moved to DOMContentLoaded</div>
+        <div class="log-item change">Toolbar buttons (bPause, bClear, bGrid, bHeat, bRain) all had wrong IDs — all corrected</div>
+        <div class="log-item change">FPS counter and particle count not updating — sF / sP element IDs were wrong, now fixed</div>
+        <div class="log-item change">Brush size and sim speed sliders had no effect — wired to correct elements</div>
+        <div class="log-item change">applySettings() was crashing — v1 globals CELL, simSpeed, bsz, ta, resize() all replaced with PW API</div>
+        <div class="log-item change">loader.js startGame() was calling undefined loop(), resize(), _buildGlowData() — now calls PW.Simulation.start()</div>
+        <div class="log-item change">Menu panel buttons opened wrong panels — panSet→panSettings, panCred→panCredits, panMod→panMods all fixed</div>
+        <div class="log-item change">Pro dock element buttons used broken v1 sel= variable — replaced with PW.Input.setElement()</div>
+        <div class="log-item change">Pro dock brush/speed sliders used bsz= and simSpeed= — replaced with PW.Input.setBrush() / PW.Simulation.setSpeed()</div>
+        <div class="log-item change">buildElemRegistry() was scraping DOM buttons — now reads from PW.ElementRegistry directly</div>
+        <div class="log-item change">chat.js had stray &lt;/script&gt;&lt;/html&gt; tags at end of file — removed</div>
+        <div class="log-item change">firebase-init.js was calling ES module imports (initializeApp, getDatabase) that don't exist in compat SDK — fixed</div>
+        <div class="log-item change">firebase-init.js contained old mpHost/mpJoin/mpDisconnect — silently overwrote new multiplayer.js versions — removed</div>
+        <div class="log-item change">mods.js had syntax error on line 95 — missing function keyword on modSetTab(t){ — fixed</div>
+        <div class="log-item change">mods.js used v1 globals E[], EN[], fp(), fl(), rg(), wlk(), gcol() — all replaced with PW API</div>
+        <div class="log-item change">achievements.js wrapped NUKE() and sC() which don't exist in v2 — removed, replaced with PW.Grid.setCell proxy</div>
+        <div class="log-item change">account.js used ta[], ca[], ea[], da[], ha[] grid arrays — replaced with PW.Grid API for save/load</div>
+        <div class="log-item change">shrapnel element had missing closing brace in tick function — crashed entire basics.js</div>
+        <div class="log-item change">multiplayer.js used 3 Firebase v9 API violations — onDisconnect(), snap.ref.remove(), all fixed to proper v9 modular calls</div>
+        <div class="log-item change">theme buttons in loader.js referenced #panSet which doesn't exist — wired to setTheme() instead</div>
+        <div class="log-item change">panAcct panel alias was wrong — fixed to panAccount</div>
 
-        <div style="font-size:.52rem;color:#44ff88;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🧪 293 ELEMENTS — FULL v1 ROSTER RESTORED + MORE</div>
-        <div class="log-item">293 total elements across 14 category files (up from 172)</div>
+        <!-- PHYSICS -->
+        <div style="font-size:.52rem;color:#ff8800;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚡ COMPLETE PHYSICS ENGINE REWRITE</div>
+        <div class="log-item">Sandboxels-inspired physics merged into PW architecture — best of both worlds</div>
+        <div class="log-item">POWDER() — proper no-noclip: falls straight down, tries random diagonal, then opposite. Sand never teleports through walls</div>
+        <div class="log-item">LIQUID(viscosity) — honey flows at 0.08, water at 1.0, superfluid at 1.0 with wall-climbing. Density-aware: heavy liquids sink through light ones</div>
+        <div class="log-item">GAS() — all 8 directions shuffled every tick. No more directional bias. Gas spreads like a real cloud</div>
+        <div class="log-item">FIRE() — energy countdown from 60, heats and ignites neighbors based on their burnAt value, dies into smoke</div>
+        <div class="log-item">MOLTEN() — emits fire upward at exactly 2.5% per tick (Sandboxels rate), self-heats, flows at viscosity 0.25</div>
+        <div class="log-item">doBurning() — per-element burnTime countdown and burnInto transition, fire spreads to neighbors above burnAt threshold</div>
+        <div class="log-item">doHeat() — conductivity diffusion per tick. Copper 0.95, wood 0.04, rubber 0.01, vacuum 0</div>
+        <div class="log-item">Reaction system — Reactions.add('sand', { water: { elem1:'wet_sand', chance:0.02 } }) runs automatically every tick</div>
+        <div class="log-item">explode() — chain reactions via setTimeout, budget cap, screen shake, flash overlay. TNT→TNT, gas→blast, uranium→critical</div>
+        <div class="log-item">Built-in reactions: sand+water→wet_sand, lava+water→stone+steam, fire+water→steam, ice+fire→water, gunpowder+fire→explosion, TNT chain, acid dissolves, and more</div>
+        <div class="log-item">Heat map overlay toggle — shows temperature of every cell with colour gradient</div>
+        <div class="log-item">window._shakeEnabled — screen shake on explosion, toggleable in settings and admin panel</div>
 
-        <div class="log-item"><b>Creatures (14):</b> Virus, Zombie, Person, Citizen, Police, Wolf, Bear, Bat, Moth, Jellyfish, Octopus, Shark, Whale, Crab — with proper AI (flee, hunt, infect, swim)</div>
-        <div class="log-item"><b>Fire &amp; Explosives:</b> Wildfire, Greek Fire, Napalm+, Thermite, Sulfur, Phosphorus, Shrapnel, Acid Rain</div>
-        <div class="log-item"><b>Liquids &amp; Chemicals:</b> Poison, Nitric Acid, Soap, Bleach, Resin, Yeast, Seawater, Superfluid, Mercury+</div>
-        <div class="log-item"><b>Solids &amp; Minerals:</b> Basalt, Sandstone, Quartz, Pumice, Stalactite, Ash+, Gravel+, Clay, Bone, Wax, Glass+, Steel Beam, Wood Plank, Carpet, Plastic, Polymer, Lead, Gold element</div>
-        <div class="log-item"><b>Biology &amp; Lab:</b> Bacteria, Mold, Fungus, Spore, Egg, Larva, Firefly, DNA, Cell, Parasite, Mutant Virus, Ecosystem, Chem A/B/C, Catalyst, Beaker</div>
-        <div class="log-item"><b>City:</b> Road, House, Shop, Office, Police Station, Fire Station, Alien, Alien Goo, Alien Beam</div>
-        <div class="log-item"><b>Food:</b> Cheese, Bread, Meat, Sugar</div>
-        <div class="log-item"><b>Gases:</b> Helium, Argon, Ozone, Spark, Electricity, Solar Wind, Wind</div>
-        <div class="log-item"><b>Weather:</b> Fog, Haze, Waterspout, Ball Lightning, Geyser, Dust Devil, Hailstorm</div>
-        <div class="log-item"><b>Space &amp; Exotic:</b> Sun, Nebula, Black Dwarf, Pulsar, Magnetar, Quasar, Cosmic Ray, Gamma Burst, Space Dust, Strange Matter, Exotic Matter, Tachyon, Phase Matter, Aether, Nether, God Particle, Philosopher's Stone, Timefreeze, Gravity Dust, Crystal Seed</div>
-        <div class="log-item"><b>Tech &amp; Weapons:</b> Turret, Mirror, Shield, Flamethrower, Railgun, Plasma Cannon, Magnet+, Eraser+</div>
+        <!-- ELEMENTS -->
+        <div style="font-size:.52rem;color:#44ff88;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🧪 293 ELEMENTS — FULL ROSTER REBUILT</div>
+        <div class="log-item">293 elements across 14 category files — every v1 element ported to v2 physics architecture</div>
+        <div class="log-item">All elements use proper tick(x,y,grid,helpers) format — no v1 global arrays</div>
+        <div class="log-item" style="color:#a855f7;"><b>Creatures (14 new):</b> Zombie, Person, Citizen, Police, Virus, Wolf, Bear, Bat, Moth, Jellyfish, Octopus, Shark, Whale, Crab — with full AI: flee, hunt, infect, swim, chase</div>
+        <div class="log-item"><b>Fire &amp; Explosives (8):</b> Wildfire, Greek Fire, Napalm+, Thermite, Sulfur, Phosphorus, Shrapnel, Acid Rain</div>
+        <div class="log-item"><b>Liquids &amp; Chemicals (9):</b> Poison, Nitric Acid, Soap, Bleach, Resin, Yeast, Seawater, Superfluid, Mercury+</div>
+        <div class="log-item"><b>Solids &amp; Minerals (18):</b> Basalt, Sandstone, Quartz, Pumice, Stalactite, Ash+, Gravel+, Clay, Bone, Wax, Glass+, Steel Beam, Wood Plank, Carpet, Plastic, Polymer, Lead, Gold element</div>
+        <div class="log-item"><b>Biology &amp; Lab (15):</b> Bacteria, Mold, Fungus, Spore, Egg, Larva, Firefly, DNA, Cell, Parasite, Mutant Virus, Ecosystem, Chem A/B/C, Catalyst, Beaker</div>
+        <div class="log-item"><b>City &amp; Aliens (9):</b> Road, House, Shop, Office, Police Station, Fire Station, Alien, Alien Goo, Alien Beam</div>
+        <div class="log-item"><b>Food (4):</b> Cheese, Bread, Meat, Sugar</div>
+        <div class="log-item"><b>Gases (7):</b> Helium, Argon, Ozone, Spark, Electricity, Solar Wind, Wind</div>
+        <div class="log-item"><b>Weather (7):</b> Fog, Haze, Waterspout, Ball Lightning, Geyser, Dust Devil, Hailstorm</div>
+        <div class="log-item"><b>Space &amp; Exotic (20):</b> Sun, Nebula, Black Dwarf, Pulsar, Magnetar, Quasar, Cosmic Ray, Gamma Burst, Space Dust, Strange Matter, Exotic Matter, Tachyon, Phase Matter, Aether, Nether, God Particle, Philosopher's Stone, Timefreeze, Gravity Dust, Crystal Seed</div>
+        <div class="log-item"><b>Tech &amp; Weapons (8):</b> Turret, Mirror, Shield, Flamethrower, Railgun, Plasma Cannon, Magnet+, Eraser+</div>
 
-        <div style="font-size:.52rem;color:#4ac8ff;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🌐 MULTIPLAYER — HOST-AUTHORITY REWRITE</div>
-        <div class="log-item">Complete multiplayer architecture overhaul — one world, one simulation, one host</div>
-        <div class="log-item">HOST runs PW.Simulation exclusively — it is the only physics brain</div>
-        <div class="log-item">HOST receives draw actions from all clients via Firebase, applies them to the ONE grid</div>
-        <div class="log-item">HOST broadcasts compressed world diffs every 100ms — only changed cells sent</div>
-        <div class="log-item">CLIENTS pause their simulation — they are just "fancy remote controls with screens"</div>
-        <div class="log-item">CLIENTS send draw actions → host applies → everyone sees the same result</div>
-        <div class="log-item">No more parallel universes — same explosion on every screen</div>
-        <div class="log-item">World diff system — MAX 2000 cells per packet to prevent Firebase quota burn</div>
-        <div class="log-item">Client draw actions batched every 40ms to reduce Firebase writes</div>
-        <div class="log-item">Role badge shows 👑 HOST or 🎮 CLIENT in multiplayer panel</div>
-        <div class="log-item">Auto cleanup — host leaving removes entire room, client leaving removes just their player</div>
+        <!-- MULTIPLAYER -->
+        <div style="font-size:.52rem;color:#4ac8ff;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🌐 MULTIPLAYER — HOST-AUTHORITY + FIREBASE v9</div>
+        <div class="log-item" style="color:#4ac8ff;">Core concept: one simulation. One world. One host running everything. No more parallel universes.</div>
+        <div class="log-item">Upgraded to Firebase v9 modular SDK — cleaner imports, smaller bundle, no compat layer needed</div>
+        <div class="log-item">Anonymous auth — players auto sign-in when joining. No account needed for multiplayer</div>
+        <div class="log-item">HOST runs PW.Simulation — the only physics brain. Receives all player draw actions from Firebase and applies them to the one grid</div>
+        <div class="log-item">HOST broadcasts compressed world diffs every 100ms — only changed cells sent, max 2000 per packet</div>
+        <div class="log-item">CLIENTS pause their simulation. They are "fancy remote controls with screens". Draw actions go to Firebase → host applies → diff broadcasts back</div>
+        <div class="log-item">watchHostDiffs() — clients subscribe to diffs with orderByChild('t').startAt() to skip old history</div>
+        <div class="log-item">watchClientActions() — host applies client draw actions immediately, removes from Firebase after applying</div>
+        <div class="log-item">Client draw actions batched every 40ms — reduces Firebase writes significantly</div>
+        <div class="log-item">World serialized on host start — joining clients receive full world snapshot, then switch to diffs</div>
+        <div class="log-item">onDisconnect() auto-cleanup — host leaving removes entire room, client leaving removes just their player entry</div>
+        <div class="log-item">Cursor overlay canvas — all player cursors rendered with name tags and colour dots</div>
+        <div class="log-item">Role badge: 👑 HOST or 🎮 CLIENT shown in the multiplayer panel</div>
+        <div class="log-item">Auth status: 🔐 Signed in anonymously shown when connected</div>
+        <div class="log-item">Room collision prevention — if a randomly generated room code already exists, generates a new one</div>
 
-        <div style="font-size:.52rem;color:#ff88aa;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚙ SETTINGS — REBUILT UI</div>
-        <div class="log-item">Settings panel completely redesigned — tabbed layout, clean visuals</div>
-        <div class="log-item">Simulation tab: speed, heat spread, explosion power, gravity — all with sliders</div>
-        <div class="log-item">Display tab: cell size, glow toggle, screen shake toggle, theme picker</div>
-        <div class="log-item">Controls tab: full hotkey reference + cheat code list</div>
-        <div class="log-item">Performance tab: AI toggle, performance mode, live FPS/particle/grid/element stats</div>
-        <div class="log-item">Theme switcher: Dark, Neon, Warm, Mono — saved to localStorage</div>
+        <!-- SETTINGS -->
+        <div style="font-size:.52rem;color:#ff88aa;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚙ SETTINGS — REBUILT WITH 4 TABS</div>
+        <div class="log-item">Settings panel completely redesigned — tabbed layout, dark theme, clean UI</div>
+        <div class="log-item">🧪 Simulation tab — Speed slider (1–10x), Heat spread multiplier, Explosion power multiplier, Gravity strength</div>
+        <div class="log-item">🎨 Display tab — Cell size picker (2px–5px), Glow toggle, Screen shake toggle, Theme picker (Dark / Neon / Warm / Mono)</div>
+        <div class="log-item">🎮 Controls tab — Full hotkey reference, cheat code list (omariscool, bigbang, freeze, supernova)</div>
+        <div class="log-item">⚡ Performance tab — Performance mode (disables glow + shake), AI creature toggle, live FPS / particle count / grid size / element count</div>
+        <div class="log-item">Themes saved to localStorage — reloading the page remembers your theme</div>
+        <div class="log-item">Reset Defaults button — resets all sliders back to standard values</div>
 
+        <!-- MODS -->
+        <div style="font-size:.52rem;color:#ffcc44;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">📦 MOD SYSTEM — FIXED + UPGRADED</div>
+        <div class="log-item">Mod elements now register via PW.ElementRegistry.registerMod() — appear in sidebar automatically</div>
+        <div class="log-item">Mod tick functions built from JSON behavior field using real v2 physics helpers (POWDER, LIQUID, GAS)</div>
+        <div class="log-item">Mod reaction system wired to proper v2 neighbor checks and grid API</div>
+        <div class="log-item">Reaction dropdowns now populate from PW.ElementRegistry — shows all 293 registered elements</div>
+        <div class="log-item">6 library mods included: Chaos Pack, Ocean Life, Alchemy Lab, Space Storm, Fantasy Biome, Industrial Pack</div>
+        <div class="log-item">Mod builder, exporter, share code, and file drop/browse all fixed and working</div>
 
-        <div class="log-item">Beta warning popup on first visit — "don't show again" checkbox saves to localStorage</div>
-        <div class="log-item">Roadmap panel in menu — shows all planned features</div>
-        <div class="log-item">Disaster buttons wired up — meteor shower, blizzard, acid rain, earthquake, tsunami and more</div>
-        <div class="log-item">Chaos button spawns 500 random elements across the grid</div>
-        <div class="log-item">Game renamed from Particle World 2.0 → v1.3 Beta</div>
-        <div class="log-item">293 elements restored — full v1 roster ported to the v2 physics architecture</div>
-        <div class="log-item">Host-authority multiplayer — one simulation, one world, everyone sees the same thing</div>
-        <div class="log-item">Settings panel rebuilt with 4 tabs: Simulation, Display, Controls, Performance</div>
+        <!-- ACCOUNTS -->
+        <div style="font-size:.52rem;color:#88ffcc;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">👤 ACCOUNTS &amp; ACHIEVEMENTS — FIXED</div>
+        <div class="log-item">World save/load rebuilt with PW.Grid API — saves every non-empty cell with type, heat, and energy</div>
+        <div class="log-item">Settings save to account — sim speed, glow, screen shake stored per user</div>
+        <div class="log-item">Achievement system rebuilt — hooks into PW.Grid.setCell proxy instead of wrapping v1 functions</div>
+        <div class="log-item">Achievements persist to localStorage — unlocked achievements survive page reload</div>
+        <div class="log-item">6 new achievements: Star Maker (sun), Singularity, Connected (multiplayer), plus score milestones</div>
+        <div class="log-item">PW_dev auto-unlocks all achievements and the admin panel on login</div>
 
-        <div class="log-item change">Version: v1.2.3 → v1.3.0 Beta</div>
+        <!-- NEW FEATURES -->
+        <div style="font-size:.52rem;color:#c77dff;letter-spacing:.1em;margin:10px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">✨ NEW FEATURES</div>
+        <div class="log-item">Beta warning popup — shown on first visit with "don't show again" checkbox, saves to localStorage</div>
+        <div class="log-item">Roadmap panel — full list of planned features accessible from the menu</div>
+        <div class="log-item">Update log panel — full version history accessible in-game (this panel)</div>
+        <div class="log-item">firebase-init.js simplified — domain lock + visitor logging only, Firebase owned by multiplayer.js</div>
+        <div class="log-item">chat.js upgraded — uses firebase.database().ref() compat pattern with retry loop for safe init</div>
+        <div class="log-item">Game version renamed: Particle World 2.0 → v1.4 Beta → v1.4 Beta</div>
+        <div class="log-item">All 11 JS files pass Node.js --check syntax validation — zero syntax errors</div>
+
+        <div style="margin-top:12px;" class="log-item change">Version: v1.2.3 → v1.4.0 Beta</div>
       </div>
+
 
       <div class="log-entry">
         <div class="log-ver">v2.0.0 — Full Remake 🏗</div>
@@ -802,7 +857,7 @@ function buildPanels() {
   <div class="opanel" id="panCredits">
     <div class="opbox" style="text-align:center;">
       <div class="pw-logo" style="font-size:1.5rem;">P<span style="color:#a855f7">W</span></div>
-      <div style="font-size:.55rem;color:#333;letter-spacing:.2em;margin-bottom:1.5rem;">v1.3.0 BETA · A PHYSICS SANDBOX</div>
+      <div style="font-size:.55rem;color:#333;letter-spacing:.2em;margin-bottom:1.5rem;">v1.4.0 BETA · A PHYSICS SANDBOX</div>
       <h3>Made by</h3>
       <p style="color:#a855f7;font-family:'Syne',sans-serif;font-size:.9rem;">omelette180</p>
       <p>Built with pure HTML5 Canvas + Firebase</p>
@@ -835,9 +890,20 @@ function buildPanels() {
   `;
 }
 
+// ID aliases — map new names → old index.html IDs (both work)
+const _PANEL_ALIASES = {
+  panSettings: 'panSet',
+  panCredits:  'panCred',
+  panMods:     'panMod',
+  panAcct:     'panAccount',
+};
+
 function showPanel(id) {
   closePanels();
-  document.getElementById(id)?.classList.add('open');
+  // Try the given ID first, then the alias
+  let el = document.getElementById(id);
+  if (!el) el = document.getElementById(_PANEL_ALIASES[id] || id);
+  if (el) el.classList.add('open');
 }
 function closePanels() {
   document.querySelectorAll('.opanel').forEach(p => p.classList.remove('open'));
@@ -1044,6 +1110,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { if (loader) loader.style.display = 'none'; }, 1000);
   }, 400);
 
-  console.log('[PW UI] v1.3.0 — UI initialized ✓');
+  console.log('[PW UI] v1.4.0 — UI initialized ✓');
   console.log(`[PW UI] ${PW.ElementRegistry.count()} elements registered`);
 });
