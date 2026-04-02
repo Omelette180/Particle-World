@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><title>Particle World v1.4 Beta</title>
+<meta charset="UTF-8"/><title>Particle World — v1.4 Beta</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Mono:wght@300;400&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -398,6 +398,13 @@ body.layout-pro #proStrip {
 .ec-preview{width:22px;height:22px;border-radius:3px;border:1px solid #222;flex-shrink:0;}
 .ec-select{flex:1;padding:5px 7px;background:#040404;border:1px solid #1a1a1a;border-radius:3px;color:#888;font-family:'DM Mono',monospace;font-size:.63rem;outline:none;}
 .ec-select:focus{border-color:var(--acc);}
+/* ── NEW SETTINGS TABS v1.4 ── */
+.stab{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--tx);font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.06em;padding:7px 6px;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;text-transform:uppercase;}
+.stab:hover{color:var(--tx2);}
+.stab.active{color:var(--acc);border-bottom-color:var(--acc);}
+.stab-panel{animation:stabFade .12s ease;}
+@keyframes stabFade{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+
 </style>
 </head>
 <body>
@@ -1005,64 +1012,70 @@ body.layout-pro #proStrip {
 
 <!-- ═══ SETTINGS ═══ -->
 <div class="opanel" id="panSet">
-<div class="opbox" style="max-width:500px;padding:0;overflow:hidden;border-radius:8px;">
+<div class="opbox" style="max-width:500px;padding:0;overflow:hidden;">
 
-  <!-- Header -->
-  <div style="background:linear-gradient(135deg,#0d0d1a,#130d1f);padding:1.1rem 1.5rem .8rem;border-bottom:1px solid #1a1a2a;">
-    <div style="font-family:'Syne',sans-serif;font-size:.9rem;color:#a855f7;letter-spacing:.08em;font-weight:700;">⚙ SETTINGS</div>
-    <div style="font-size:.47rem;color:#2a2a2a;letter-spacing:.14em;margin-top:2px;">PARTICLE WORLD v1.4.0 Beta</div>
+  <!-- Settings Header -->
+  <div style="padding:1.1rem 1.5rem .85rem;border-bottom:1px solid var(--b);background:var(--panel);">
+    <div style="font-family:'Syne',sans-serif;font-size:.88rem;color:var(--w);letter-spacing:.06em;font-weight:700;">Settings</div>
+    <div style="font-size:.47rem;color:var(--tx);letter-spacing:.14em;margin-top:2px;text-transform:uppercase;">Particle World v1.4.0 Beta</div>
   </div>
 
-  <!-- Tabs -->
-  <div style="display:flex;background:#060609;border-bottom:1px solid #0f0f18;">
-    <button class="stab active" onclick="switchStab(this,'stab-sim')">🧪 Sim</button>
-    <button class="stab" onclick="switchStab(this,'stab-vis')">🎨 Visual</button>
-    <button class="stab" onclick="switchStab(this,'stab-layout')">🖥 Layout</button>
-    <button class="stab" onclick="switchStab(this,'stab-perf')">⚡ Perf</button>
-    <button class="stab" onclick="switchStab(this,'stab-ctrl')">🎮 Keys</button>
+  <!-- Tab bar -->
+  <div style="display:flex;background:var(--panel);border-bottom:1px solid var(--b);">
+    <button class="stab active" onclick="switchStab(this,'stab-sim')">Simulation</button>
+    <button class="stab" onclick="switchStab(this,'stab-vis')">Display</button>
+    <button class="stab" onclick="switchStab(this,'stab-layout')">Layout</button>
+    <button class="stab" onclick="switchStab(this,'stab-perf')">Performance</button>
+    <button class="stab" onclick="switchStab(this,'stab-keys')">Controls</button>
   </div>
 
-  <div style="padding:1rem 1.4rem 1.2rem;min-height:190px;">
+  <div style="padding:.9rem 1.3rem 1.1rem;min-height:180px;">
 
-    <!-- SIM TAB -->
+    <!-- SIMULATION -->
     <div id="stab-sim" class="stab-panel">
-      <div class="srow"><span class="slabel">Cell Size <span style="color:#333;font-size:.46rem;">(reload needed)</span></span>
+      <div class="srow">
+        <span class="slabel">Cell size <span style="font-size:.5rem;color:#333;">(reload to apply)</span></span>
         <select id="setQ">
-          <option value="2">2px — Ultra HD</option>
-          <option value="3" selected>3px — Default</option>
-          <option value="4">4px — Performance</option>
-          <option value="6">6px — Potato 🥔</option>
+          <option value="2">2 px — Ultra sharp</option>
+          <option value="3" selected>3 px — Default</option>
+          <option value="4">4 px — Smooth</option>
+          <option value="6">6 px — Potato</option>
         </select>
       </div>
-      <div class="srow"><span class="slabel">Sim Speed</span>
+      <div class="srow">
+        <span class="slabel">Sim speed</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="range" id="setSpd" min="1" max="5" value="2" style="width:100px;accent-color:#a855f7;" oninput="setSpdV.textContent=this.value+'x'">
-          <span id="setSpdV" style="font-size:.6rem;color:#a855f7;min-width:24px;">2x</span>
+          <input type="range" id="setSpd" min="1" max="5" value="2" style="width:100px;" oninput="document.getElementById('setSpdV').textContent=this.value+'x'">
+          <span id="setSpdV" style="font-size:.6rem;color:var(--acc);min-width:24px;">2x</span>
         </div>
       </div>
-      <div class="srow"><span class="slabel">Gravity</span>
+      <div class="srow">
+        <span class="slabel">Gravity</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="range" id="setGravS" min="0" max="20" value="10" style="width:100px;accent-color:#a855f7;" oninput="window.gravityMult=this.value/10;document.getElementById('setGravV').textContent=(this.value/10).toFixed(1)+'x'">
-          <span id="setGravV" style="font-size:.6rem;color:#a855f7;min-width:32px;">1.0x</span>
+          <input type="range" id="setGravS" min="0" max="20" value="10" style="width:100px;" oninput="window.gravityMult=this.value/10;document.getElementById('setGravV').textContent=(this.value/10).toFixed(1)+'x'">
+          <span id="setGravV" style="font-size:.6rem;color:var(--acc);min-width:32px;">1.0x</span>
         </div>
       </div>
-      <div class="srow"><span class="slabel">Explosion Power</span>
+      <div class="srow">
+        <span class="slabel">Explosion power</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="range" id="setExplS" min="1" max="40" value="10" style="width:100px;accent-color:#a855f7;" oninput="window.explMult=this.value/10;document.getElementById('setExplV').textContent=(this.value/10).toFixed(1)+'x'">
-          <span id="setExplV" style="font-size:.6rem;color:#a855f7;min-width:32px;">1.0x</span>
+          <input type="range" id="setExplS" min="1" max="40" value="10" style="width:100px;" oninput="window.explMult=this.value/10;document.getElementById('setExplV').textContent=(this.value/10).toFixed(1)+'x'">
+          <span id="setExplV" style="font-size:.6rem;color:var(--acc);min-width:32px;">1.0x</span>
         </div>
       </div>
     </div>
 
-    <!-- VISUAL TAB -->
+    <!-- DISPLAY -->
     <div id="stab-vis" class="stab-panel" style="display:none;">
-      <div class="srow"><span class="slabel">Glow effects</span>
+      <div class="srow">
+        <span class="slabel">Glow effects</span>
         <select id="setGlow"><option value="1">On</option><option value="0">Off</option></select>
       </div>
-      <div class="srow"><span class="slabel">Screen shake</span>
+      <div class="srow">
+        <span class="slabel">Screen shake</span>
         <select id="setShake"><option value="1">On</option><option value="0">Off</option></select>
       </div>
-      <div style="margin-top:6px;">
+      <div style="margin-top:8px;">
         <div class="slabel" style="margin-bottom:6px;">Theme</div>
         <div class="tgrid">
           <button class="tt on" data-t="">Dark</button>
@@ -1075,62 +1088,64 @@ body.layout-pro #proStrip {
       </div>
     </div>
 
-    <!-- LAYOUT TAB -->
+    <!-- LAYOUT -->
     <div id="stab-layout" class="stab-panel" style="display:none;">
-      <div class="srow"><span class="slabel">Layout Mode</span>
+      <div class="srow">
+        <span class="slabel">Layout</span>
         <select id="setLayout">
-          <option value="classic">Classic — Sidebar</option>
-          <option value="pro">Pro — Bottom dock</option>
+          <option value="classic">Classic — left sidebar</option>
+          <option value="pro">Pro — bottom dock</option>
         </select>
       </div>
-      <div style="margin-top:10px;padding:10px;background:#080810;border:1px solid #0f0f18;border-radius:4px;font-size:.52rem;color:#444;line-height:1.8;">
-        <b style="color:#666;">Classic</b> — Sidebar on left. Best for beginners.<br>
-        <b style="color:#666;">Pro</b> — Bottom dock with category tabs. More canvas space. Power user mode.
+      <div style="margin-top:10px;padding:10px;background:#050505;border:1px solid var(--b);border-radius:4px;font-size:.56rem;color:var(--tx);line-height:1.9;">
+        <b style="color:var(--tx2);">Classic</b> — sidebar on the left, all elements listed vertically.<br>
+        <b style="color:var(--tx2);">Pro</b> — bottom dock with category tabs. More canvas space. Brush, speed and search bar always visible.
       </div>
     </div>
 
-    <!-- PERF TAB -->
+    <!-- PERFORMANCE -->
     <div id="stab-perf" class="stab-panel" style="display:none;">
-      <div class="srow"><span class="slabel">Performance Mode</span>
-        <select id="setPerfMode"><option value="0">Off — Full quality</option><option value="1">On — Max FPS</option></select>
+      <div class="srow">
+        <span class="slabel">Performance mode</span>
+        <select id="setPerfMode"><option value="0">Off — full quality</option><option value="1">On — max FPS</option></select>
       </div>
-      <div style="margin-top:10px;padding:10px;background:#070710;border:1px solid #0e0e1a;border-radius:4px;font-size:.52rem;color:#444;line-height:2;font-family:'DM Mono',monospace;">
-        FPS: <span style="color:#a855f7;" id="setFpsDisp">—</span>&nbsp;&nbsp;
-        Particles: <span style="color:#a855f7;" id="setPartDisp">—</span><br>
-        Grid: <span style="color:#a855f7;" id="setGridDisp">—</span>
+      <div style="margin-top:10px;padding:10px;background:#050505;border:1px solid var(--b);border-radius:4px;font-size:.54rem;color:var(--tx);line-height:2;font-family:'DM Mono',monospace;">
+        FPS <span style="color:var(--acc);" id="setFpsDisp">—</span>&ensp;
+        Particles <span style="color:var(--acc);" id="setPartDisp">—</span><br>
+        Grid <span style="color:var(--acc);" id="setGridDisp">—</span>
       </div>
     </div>
 
-    <!-- CONTROLS TAB -->
-    <div id="stab-ctrl" class="stab-panel" style="display:none;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;font-size:.51rem;color:#444;line-height:2.1;">
-        <div><span style="color:#a855f7;">LMB</span> — Draw</div>
-        <div><span style="color:#a855f7;">RMB</span> — Erase</div>
-        <div><span style="color:#a855f7;">SCROLL</span> — Brush size</div>
-        <div><span style="color:#a855f7;">SPACE</span> — Pause</div>
-        <div><span style="color:#a855f7;">H</span> — Heat map</div>
-        <div><span style="color:#a855f7;">G</span> — Grid overlay</div>
-        <div><span style="color:#a855f7;">R</span> — Rain mode</div>
-        <div><span style="color:#a855f7;">C</span> — Clear all</div>
+    <!-- CONTROLS -->
+    <div id="stab-keys" class="stab-panel" style="display:none;">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.58rem;line-height:2.1;">
+        <b style="color:var(--tx2);">Left click</b><span style="color:var(--tx);">Draw element</span>
+        <b style="color:var(--tx2);">Right click</b><span style="color:var(--tx);">Erase</span>
+        <b style="color:var(--tx2);">Scroll wheel</b><span style="color:var(--tx);">Brush size</span>
+        <b style="color:var(--tx2);">Space</b><span style="color:var(--tx);">Pause / resume</span>
+        <b style="color:var(--tx2);">H</b><span style="color:var(--tx);">Heat map overlay</span>
+        <b style="color:var(--tx2);">G</b><span style="color:var(--tx);">Grid overlay</span>
+        <b style="color:var(--tx2);">R</b><span style="color:var(--tx);">Rain mode</span>
+        <b style="color:var(--tx2);">C</b><span style="color:var(--tx);">Clear canvas</span>
       </div>
-      <div style="margin-top:8px;font-size:.49rem;color:#2a2a2a;line-height:1.9;">
-        Cheats — type in game:<br>
-        <span style="color:#4a1a6a;">omariscool</span> — admin &nbsp;·&nbsp;
-        <span style="color:#4a1a6a;">bigbang</span> — 8 explosions &nbsp;·&nbsp;
-        <span style="color:#4a1a6a;">freeze</span> — stop particles
+      <div style="margin-top:10px;font-size:.52rem;color:#2a2a2a;line-height:1.9;">
+        Cheat codes — type anywhere in game:<br>
+        <span style="color:#3a1a5a;">omariscool</span> — unlock admin panel<br>
+        <span style="color:#3a1a5a;">bigbang</span> — 8 simultaneous explosions<br>
+        <span style="color:#3a1a5a;">freeze</span> — freeze all particles
       </div>
     </div>
 
   </div>
 
-  <!-- Footer -->
-  <div style="padding:.65rem 1.4rem;background:#03030a;border-top:1px solid #0a0a18;display:flex;justify-content:space-between;align-items:center;">
+  <!-- Footer buttons -->
+  <div style="padding:.65rem 1.3rem;background:var(--panel);border-top:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;">
     <button id="closeSet" onclick="applySettings();document.getElementById('panSet').classList.remove('open')"
-      style="background:linear-gradient(135deg,#1a0a2a,#2a0a3a);border:1px solid #a855f7;color:#a855f7;font-family:'DM Mono',monospace;font-size:.56rem;padding:6px 18px;cursor:pointer;border-radius:3px;letter-spacing:.08em;">
-      ✓ APPLY &amp; CLOSE
+      style="padding:6px 18px;border:1px solid var(--acc);background:transparent;color:var(--acc);font-family:'DM Mono',monospace;font-size:.58rem;cursor:pointer;border-radius:3px;letter-spacing:.06em;transition:all .1s;">
+      Apply &amp; close
     </button>
     <button onclick="document.getElementById('panSet').classList.remove('open')"
-      style="background:transparent;border:1px solid #111122;color:#2a2a2a;font-family:'DM Mono',monospace;font-size:.48rem;padding:5px 10px;cursor:pointer;border-radius:3px;">
+      style="padding:5px 12px;border:1px solid var(--b);background:transparent;color:var(--tx);font-family:'DM Mono',monospace;font-size:.52rem;cursor:pointer;border-radius:3px;">
       Cancel
     </button>
   </div>
@@ -1309,25 +1324,29 @@ body.layout-pro #proStrip {
   <h2>📋 Update Log</h2>
 
   <div class="log-entry current">
-    <div class="log-ver" style="font-size:.95rem;">v1.4.0 — Big Update 🚀</div>
+    <div class="log-ver">v1.4.0 — Big Update</div>
     <div class="log-date">March 2026</div>
 
-    <div style="font-size:.52rem;color:#ff4444;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">🔧 ARCHITECTURE</div>
-    <div class="log-item">Split into multi-file architecture — engine.js, firebase.js, settings.js, misc.js</div>
-    <div class="log-item">v1 engine fully preserved — all 240+ element update functions, heat system, melt/freeze, reactions intact</div>
+    <div style="font-size:.52rem;color:var(--acc);letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">Architecture</div>
+    <div class="log-item">Split into 4 external files — engine.js (full v1 game, 5480 lines), firebase.js (multiplayer), misc.js (chat, easter eggs), settings.js (new tab logic)</div>
+    <div class="log-item">index.html reduced from 8602 lines to ~2550 lines — HTML and CSS only, no inline JS</div>
+    <div class="log-item">All v1 engine code preserved byte-for-byte — every element update function, heat system, melt/freeze, reactions, glow renderer, pro layout all intact</div>
+    <div class="log-item">Multi-file structure means each file can be updated independently without breaking the rest</div>
 
-    <div style="font-size:.52rem;color:#ff8800;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">⚙ NEW SETTINGS PANEL</div>
-    <div class="log-item">Settings panel rebuilt with 5 tabs: Sim, Visual, Layout, Perf, Keys</div>
-    <div class="log-item">Sim tab — Cell size, sim speed slider, gravity multiplier (0x to 2x), explosion power multiplier</div>
-    <div class="log-item">Visual tab — Glow, screen shake, and all 6 themes in one clean view</div>
-    <div class="log-item">Layout tab — Switch between Classic sidebar and Pro bottom dock. Explanation of each mode</div>
-    <div class="log-item">Performance tab — Perf mode toggle, live FPS / particle count / grid size stats</div>
-    <div class="log-item">Controls tab — Full hotkey reference and cheat code list</div>
+    <div style="font-size:.52rem;color:var(--acc);letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">New Settings Panel</div>
+    <div class="log-item">Redesigned settings panel with 5 tabs: Simulation, Display, Layout, Performance, Controls</div>
+    <div class="log-item">Simulation tab — cell size, sim speed, gravity multiplier (0x to 2x), explosion power multiplier (up to 4x)</div>
+    <div class="log-item">Display tab — glow, screen shake, all 6 themes in one clean view</div>
+    <div class="log-item">Layout tab — switch between Classic sidebar and Pro bottom dock with descriptions of each</div>
+    <div class="log-item">Performance tab — performance mode toggle, live FPS, particle count and grid dimensions updated every 700ms</div>
+    <div class="log-item">Controls tab — full keyboard reference and all cheat codes listed</div>
+    <div class="log-item">All existing applySettings() logic preserved — cell size, speed, glow, shake, perf mode, layout, themes still work exactly the same</div>
 
-    <div style="font-size:.52rem;color:#44ff88;letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">✨ NEW FEATURES</div>
-    <div class="log-item">Gravity multiplier — set to 0 for zero-g sandbox, up to 2x for heavy world</div>
-    <div class="log-item">Explosion power multiplier — make every explosion up to 4x bigger</div>
-    <div class="log-item">Live perf stats in settings — FPS, particle count, grid dimensions updated every 600ms</div>
+    <div style="font-size:.52rem;color:var(--acc);letter-spacing:.1em;margin:8px 0 5px;border-bottom:1px solid #1a1a2a;padding-bottom:3px;">New Features</div>
+    <div class="log-item">Gravity multiplier — set to 0 for zero-g, 0.5 for moon gravity, 1 for normal, 2 for heavy world. Wraps v1 canFall() function</div>
+    <div class="log-item">Explosion power multiplier — scales the radius passed to v1 explode(). 1x normal, up to 4x for massive chain reactions</div>
+    <div class="log-item">Live performance stats displayed inside the settings panel — no need to look at the top bar</div>
+
     <div class="log-item change">Version: v1.2.3 → v1.4.0 Beta</div>
   </div>
 
@@ -2443,13 +2462,6 @@ body.layout-pro #proStrip {
   font-size:.5rem;color:#1a2a1a;text-align:center;padding:4px;
   letter-spacing:.06em;
 }
-
-/* ── NEW SETTINGS TABS (v1.4) ── */
-.stab{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:#2a2a3a;font-family:'DM Mono',monospace;font-size:.47rem;letter-spacing:.05em;padding:7px 3px;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;}
-.stab:hover{color:#555;}
-.stab.active{color:#a855f7;border-bottom-color:#a855f7;}
-.stab-panel{animation:stfadeIn .1s ease;}
-@keyframes stfadeIn{from{opacity:0}to{opacity:1}}
 </style>
 
 <!-- OTMANE PICKER -->
